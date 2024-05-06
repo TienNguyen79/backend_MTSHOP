@@ -13,10 +13,9 @@ export function badRequet() {
   return { results: `bad requet` };
 }
 
-export function error(data, description) {
+export function error(description) {
   return {
-    results: data,
-    description: description,
+    ms: description,
   };
 }
 

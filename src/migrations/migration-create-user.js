@@ -17,6 +17,12 @@ module.exports = {
       password: {
         type: Sequelize.STRING,
       },
+      phoneNumber: {
+        type: Sequelize.STRING,
+      },
+      avatar: {
+        type: Sequelize.STRING,
+      },
       roleID: {
         type: Sequelize.INTEGER,
       },
