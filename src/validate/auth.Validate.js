@@ -44,3 +44,10 @@ export const loginSchema = Joi.object({
   // .pattern(new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{6,10}$"))
   // .message("password phải chứa ít nhất 1 ký tự đặc biệt, 1 chữ viết hoa"),
 });
+
+export const emailSchema = Joi.object({
+  email: Joi.string()
+    .email()
+    .message("email không hợp lệ hoặc bị thiếu.")
+    .required(),
+});

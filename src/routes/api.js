@@ -3,23 +3,32 @@ import { success } from "../results/handle.results";
 import { OK } from "../constant/http.status";
 import { handleTest } from "../controllers/test.Controller";
 import {
+  handleForgotPass,
   handleLogin,
+  handleLogout,
   handleRefreshToken,
   handleRegister,
+  handleSendMail,
 } from "../controllers/auth.Controller";
-import { verifyToken } from "../middleware/handle.middleware";
+import {
+  verifyToken,
+  verifyTokenAdminAuth,
+} from "../middleware/handle.middleware";
 
 let router = express.Router();
 let routerAdmin = express.Router();
 
 const initWebRouter = (app) => {
   //user
-  router.get("/hihi", verifyToken, handleTest);
+  router.get("/hihi", handleTest);
 
   //auth
   router.post("/register", handleRegister);
   router.post("/login", handleLogin);
   router.post("/refreshToken", handleRefreshToken);
+  router.post("/logout", handleLogout);
+  router.post("/sendMail", handleSendMail);
+  router.post("/forgotPass", handleForgotPass);
 
   return app.use("/api/v1", router);
 };

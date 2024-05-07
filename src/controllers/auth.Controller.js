@@ -1,9 +1,12 @@
 import { OK, INTERNAL_SERVER_ERROR } from "../constant/http.status";
 import { success } from "../results/handle.results";
 import {
+  LogoutService,
+  forgotPassService,
   loginService,
   refreshTokenService,
   registerService,
+  sendMailService,
 } from "../services/auth.Service";
 
 const handleRegister = async (req, res) => {
@@ -36,4 +39,41 @@ const handleRefreshToken = async (req, res) => {
   }
 };
 
-export { handleRegister, handleLogin, handleRefreshToken };
+const handleLogout = async (req, res) => {
+  try {
+    let data = await LogoutService(res);
+
+    return data;
+  } catch (error) {
+    return res.status(INTERNAL_SERVER_ERROR).json(error);
+  }
+};
+
+const handleSendMail = async (req, res) => {
+  try {
+    let data = await sendMailService(req, res);
+
+    return data;
+  } catch (error) {
+    return res.status(INTERNAL_SERVER_ERROR).json(error);
+  }
+};
+
+const handleForgotPass = async (req, res) => {
+  try {
+    let data = await forgotPassService(req, res);
+
+    return data;
+  } catch (error) {
+    return res.status(INTERNAL_SERVER_ERROR).json(error);
+  }
+};
+
+export {
+  handleRegister,
+  handleLogin,
+  handleRefreshToken,
+  handleLogout,
+  handleSendMail,
+  handleForgotPass,
+};

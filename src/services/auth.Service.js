@@ -2,18 +2,24 @@ import bcrypt from "bcrypt";
 import {
   BAD_REQUEST,
   FORBIDDEN,
+  INTERNAL_SERVER_ERROR,
   OK,
   UNAUTHORIZED,
 } from "../constant/http.status";
 import db from "../models";
 import { error, success } from "../results/handle.results";
-import { loginSchema, registerSchema } from "../validate/auth.Validate";
+import {
+  emailSchema,
+  loginSchema,
+  registerSchema,
+} from "../validate/auth.Validate";
 import {
   generateAccessToken,
   generateRefreshToken,
 } from "../commom/generateToken";
 import jwt from "jsonwebtoken";
 import { configs } from "../config/config.jwtkey";
+import sendMail from "../commom/mailer";
 
 let refreshTokensTemp = [];
 
@@ -43,7 +49,7 @@ const registerService = async (data, res) => {
         password: hashed,
         phoneNumber: data.phoneNumber,
         userName: data.userName,
-        roleID: 0,
+        roleID: 1,
         status: 0,
       });
 
@@ -86,7 +92,6 @@ const loginService = async (data, res) => {
         const refreshToken = generateRefreshToken(id);
 
         refreshTokensTemp.push(refreshToken); //về sau check token có hợp lệ không
-        console.log("🚀 ~ refreshTokensTemp:", refreshTokensTemp);
         // lưu vào cookie
         const expiryDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
         res.cookie("refreshToken", refreshToken, {
@@ -161,4 +166,106 @@ const refreshTokenService = async (req, res) => {
     return res.status(OK).json({ accessToken: newaccessToken });
   });
 };
-export { registerService, loginService, refreshTokenService };
+
+const LogoutService = async (res) => {
+  res.clearCookie("refreshToken");
+  return res.status(OK).json({ ms: "Đăng xuất thành công!" });
+};
+
+const sendMailService = async (req, res) => {
+  try {
+    const validationResult = emailSchema.validate(req.body);
+    if (validationResult.error) {
+      return res
+        .status(BAD_REQUEST)
+        .json(error(validationResult.error.details[0].message));
+    }
+
+    const { email } = req.body;
+
+    // const response = await db.User.findOne({ where: { email: email } });
+
+    bcrypt
+      .hash(email, parseInt(process.env.BCRYPT_SALT_ROUND))
+      .then((hashedEmail) => {
+        res.cookie("tokenForgotPass", hashedEmail, {
+          httpOnly: true,
+          secure: false,
+          sameSite: "",
+          maxAge: 30000, //30s
+        });
+
+        sendMail(
+          email,
+          "Xác nhận Email",
+
+          `    <p>Xin Chào,</p>
+               <p>Bạn đã yêu cầu thay đổi mật khẩu cho tài khoản của mình.</p>
+               <p>Vui lòng nhấn vào liên kết dưới đây để xác nhận thay đổi:</p>
+               <p><a  href="${process.env.APP_URL}/verify?email=${email}&token=${hashedEmail}"> Xác Nhận </a></p>
+               <p>Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email này.</p>
+               <p>Trân trọng,</p>
+               <p>Đội ngũ quản trị viên MTSHOP</p>`
+        );
+        return res.status(OK).json({ ms: "Send Mail successfully !" });
+      })
+
+      .catch((error) => {
+        return res
+          .status(INTERNAL_SERVER_ERROR)
+          .json(error("Internal server error"));
+      });
+  } catch (error) {
+    console.log("🚀 ~ sendMailService ~ error:", error);
+  }
+};
+
+const forgotPassService = async (req, res) => {
+  const tokenForgotPass = req.cookies.tokenForgotPass; //đã lưu khi gửi mail giờ lấy ra
+
+  if (!tokenForgotPass)
+    return res.status(UNAUTHORIZED).json("Token đã hết hạn!");
+  const { email, password } = req.body;
+  try {
+    const response = await db.User.findOne({
+      where: { email: email },
+      raw: true,
+    });
+
+    if (response) {
+      bcrypt.compare(email, tokenForgotPass, async (err, result) => {
+        const salt = await bcrypt.genSalt(10);
+        const PassHashed = await bcrypt.hash(password, salt);
+
+        if (result) {
+          await db.User.update(
+            { password: PassHashed },
+            {
+              where: {
+                email: email,
+              },
+            }
+          );
+          return res.status(OK).json({ ms: "Thay đổi mật khẩu thành công" });
+        } else {
+          return res
+            .status(BAD_REQUEST)
+            .json(error("Thay đổi mật khẩu thất bại"));
+        }
+      });
+    } else {
+      return res.status(UNAUTHORIZED).json(error("Email không tồn tại!"));
+    }
+  } catch (error) {
+    console.log("🚀 ~ forgotPassService ~ error:", error);
+  }
+};
+
+export {
+  registerService,
+  loginService,
+  refreshTokenService,
+  LogoutService,
+  sendMailService,
+  forgotPassService,
+};
