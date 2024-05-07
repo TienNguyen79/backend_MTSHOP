@@ -3,7 +3,7 @@ import { configs } from "../config/config.jwtkey";
 
 export function generateAccessToken(payload) {
   const signOption = {
-    expiresIn: "1d",
+    expiresIn: "30s",
     algorithm: "RS256",
   };
 

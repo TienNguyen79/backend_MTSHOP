@@ -5,8 +5,8 @@ import {
   OK,
 } from "../constant/http.status";
 
-export function success(data) {
-  return { results: data };
+export function success(data, rest) {
+  return { results: data, ...rest };
 }
 
 export function badRequet() {

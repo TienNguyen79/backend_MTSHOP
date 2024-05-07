@@ -1,5 +1,5 @@
 {
-  "name": "base-expressjs",
+  "name": "backend_MTSHOP",
   "version": "1.0.0",
   "description": "build base",
   "main": "server.js",
