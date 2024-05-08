@@ -11,6 +11,13 @@ module.exports = {
      *   isBetaMember: false
      * }], {});
      */
+
+    await queryInterface.bulkDelete("Roles", null, {});
+
+    await queryInterface.sequelize.query(
+      "ALTER TABLE Roles AUTO_INCREMENT = 1;"
+    );
+
     return queryInterface.bulkInsert("Roles", [
       {
         title: "user",

@@ -13,6 +13,7 @@
     "@babel/core": "^7.24.4",
     "@babel/node": "^7.12.10",
     "@babel/preset-env": "^7.24.4",
+    "@faker-js/faker": "^8.4.1",
     "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",
     "cookie-parser": "^1.4.6",
