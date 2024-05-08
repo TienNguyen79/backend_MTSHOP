@@ -14,6 +14,7 @@ import {
   verifyToken,
   verifyTokenAdminAuth,
 } from "../middleware/handle.middleware";
+import { handleGetAllCategory } from "../controllers/category.Controller";
 
 let router = express.Router();
 let routerAdmin = express.Router();
@@ -29,6 +30,10 @@ const initWebRouter = (app) => {
   router.post("/logout", handleLogout);
   router.post("/sendMail", handleSendMail);
   router.post("/forgotPass", handleForgotPass);
+
+  //category
+
+  router.get("/categories", handleGetAllCategory);
 
   return app.use("/api/v1", router);
 };
