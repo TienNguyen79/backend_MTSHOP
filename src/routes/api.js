@@ -14,7 +14,12 @@ import {
   verifyToken,
   verifyTokenAdminAuth,
 } from "../middleware/handle.middleware";
-import { handleGetAllCategory } from "../controllers/category.Controller";
+import {
+  handleAddCategory,
+  handleGetAllCategory,
+  handledeleteCategory,
+  handleupdateCategory,
+} from "../controllers/category.Controller";
 
 let router = express.Router();
 let routerAdmin = express.Router();
@@ -34,6 +39,9 @@ const initWebRouter = (app) => {
   //category
 
   router.get("/categories", handleGetAllCategory);
+  router.post("/categories", handleAddCategory);
+  router.put("/categories/:id", handleupdateCategory);
+  router.delete("/categories/:id", handledeleteCategory);
 
   return app.use("/api/v1", router);
 };

@@ -1,6 +1,11 @@
 import { INTERNAL_SERVER_ERROR, OK } from "../constant/http.status";
 import { error } from "../results/handle.results";
-import { GetAllcategoryService } from "../services/category.Service";
+import {
+  GetAllcategoryService,
+  addCategoryService,
+  deleteCategoryService,
+  updateCategoryService,
+} from "../services/category.Service";
 
 const handleGetAllCategory = async (req, res) => {
   try {
@@ -12,4 +17,39 @@ const handleGetAllCategory = async (req, res) => {
   }
 };
 
-export { handleGetAllCategory };
+const handleAddCategory = async (req, res) => {
+  try {
+    let data = await addCategoryService(req, res);
+
+    return data;
+  } catch (error1) {
+    return res.status(INTERNAL_SERVER_ERROR).json(error(error1));
+  }
+};
+
+const handleupdateCategory = async (req, res) => {
+  try {
+    let data = await updateCategoryService(req, res);
+
+    return data;
+  } catch (error1) {
+    return res.status(INTERNAL_SERVER_ERROR).json(error(error1));
+  }
+};
+
+const handledeleteCategory = async (req, res) => {
+  try {
+    let data = await deleteCategoryService(req, res);
+
+    return data;
+  } catch (error1) {
+    return res.status(INTERNAL_SERVER_ERROR).json(error(error1));
+  }
+};
+
+export {
+  handleGetAllCategory,
+  handleAddCategory,
+  handleupdateCategory,
+  handledeleteCategory,
+};

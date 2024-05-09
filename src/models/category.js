@@ -30,6 +30,7 @@ module.exports = (sequelize, DataTypes) => {
     {
       sequelize,
       modelName: "Category",
+      paranoid: true, // Kích hoạt chế độ paranoid để sử dụng soft delete
     }
   );
   return Category;
