@@ -147,7 +147,25 @@ const deleteCategoryService = async (req, res) => {
       return res.status(NOT_FOUND).json(error("Không tìm thấy category"));
     }
 
-    await db.Category.destroy({ where: { id: id } }); // Soft delete bằng cách gọi phương thức destroy , thêm force: true  để xóa mất luôn
+    const categoryRoot = await db.Category.findOne({
+      where: { id: id, parentId: null },
+      raw: true,
+    });
+
+    if (categoryRoot) {
+      //nếu xóa cate cha thì xóa cha và cả những category con liên quan đến thằng cha
+      await db.Category.destroy({ where: { id: id } });
+
+      const getFullCate = await db.Category.findAll({ raw: true });
+
+      getFullCate.map(async (item) => {
+        if (item.parentId === id) {
+          await db.Category.destroy({ where: { id: item.id } });
+        }
+      });
+    } else {
+      await db.Category.destroy({ where: { id: id } }); // Soft delete bằng cách gọi phương thức destroy , thêm ngoài where: force: true  để xóa mất luôn
+    }
 
     return res.status(OK).json(success("Xóa thành công!"));
   } catch (error) {
@@ -159,16 +177,40 @@ const ReStoreCategoryService = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
 
-    // Tìm kiếm category đã bị xóa mềm trong cơ sở dữ liệu
-    const category = await db.Category.findByPk(id, { paranoid: false });
+    const category = await db.Category.findByPk(id, {
+      raw: true,
+      paranoid: false,
+    });
 
     if (!category) {
       return res.status(NOT_FOUND).json(error("Không tìm thấy category"));
     }
 
-    await db.Category.restore({ where: { id: id } });
+    const categoryRoot = await db.Category.findOne({
+      where: { id: id, parentId: null },
+      raw: true,
+      paranoid: false,
+    });
 
-    return res.status(OK).json(success("Xóa thành công!"));
+    if (categoryRoot) {
+      //nếu phục hồi cate cha thì phục hồi cha và cả những category con liên quan đến thằng cha
+      await db.Category.restore({ where: { id: id } });
+
+      const getFullCate = await db.Category.findAll({
+        raw: true,
+        paranoid: false,
+      });
+
+      getFullCate.map(async (item) => {
+        if (item.parentId === id) {
+          await db.Category.restore({ where: { id: item.id } });
+        }
+      });
+    } else {
+      await db.Category.restore({ where: { id: id } });
+    }
+
+    return res.status(OK).json(success("Phục hồi cate thành công!"));
   } catch (error) {
     console.log("🚀 ~ updateCategoryService ~ error:", error);
   }
@@ -179,4 +221,5 @@ export {
   addCategoryService,
   updateCategoryService,
   deleteCategoryService,
+  ReStoreCategoryService,
 };

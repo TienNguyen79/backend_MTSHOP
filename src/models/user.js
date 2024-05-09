@@ -25,6 +25,7 @@ module.exports = (sequelize, DataTypes) => {
     {
       sequelize,
       modelName: "User",
+      paranoid: true, // Kích hoạt chế độ paranoid để sử dụng soft delete
     }
   );
   return User;

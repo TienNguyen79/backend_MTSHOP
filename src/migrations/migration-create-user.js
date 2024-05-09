@@ -37,6 +37,11 @@ module.exports = {
         allowNull: false,
         type: Sequelize.DATE,
       },
+      deletedAt: {
+        // Thêm cột deletedAt để thực hiện soft delete
+        allowNull: true, // Cho phép chấp nhận giá trị NULL
+        type: Sequelize.DATE,
+      },
     });
   },
   down: async (queryInterface, Sequelize) => {

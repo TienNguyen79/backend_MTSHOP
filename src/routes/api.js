@@ -17,6 +17,7 @@ import {
 import {
   handleAddCategory,
   handleGetAllCategory,
+  handleRestoreCategory,
   handledeleteCategory,
   handleupdateCategory,
 } from "../controllers/category.Controller";
@@ -42,6 +43,7 @@ const initWebRouter = (app) => {
   router.post("/categories", handleAddCategory);
   router.put("/categories/:id", handleupdateCategory);
   router.delete("/categories/:id", handledeleteCategory);
+  router.put("/categories/restore/:id", handleRestoreCategory);
 
   return app.use("/api/v1", router);
 };
