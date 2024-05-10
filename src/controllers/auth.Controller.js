@@ -3,6 +3,7 @@ import { success } from "../results/handle.results";
 import {
   LogoutService,
   forgotPassService,
+  getCurrentUser,
   loginService,
   refreshTokenService,
   registerService,
@@ -49,6 +50,16 @@ const handleLogout = async (req, res) => {
   }
 };
 
+const handleGetCurrentUser = async (req, res) => {
+  try {
+    let data = await getCurrentUser(req, res);
+
+    return data;
+  } catch (error) {
+    return res.status(INTERNAL_SERVER_ERROR).json(error);
+  }
+};
+
 const handleSendMail = async (req, res) => {
   try {
     let data = await sendMailService(req, res);
@@ -76,4 +87,5 @@ export {
   handleLogout,
   handleSendMail,
   handleForgotPass,
+  handleGetCurrentUser,
 };

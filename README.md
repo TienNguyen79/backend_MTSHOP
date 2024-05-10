@@ -14,5 +14,6 @@ npx sequelize-cli db:migrate
 
 **_Seeder_**
 
-- seed 1 file : npx sequelize-cli seed:generate --name ten_file_seed
+- tạo 1 file seed : npx sequelize-cli seed:generate --name ten_file_seed
 - Seed all: npx sequelize-cli db:seed:all
+- Seed riêng file npx sequelize db:seed --seed ten_file1_seed.js ten_file2_seed.js ....

@@ -172,6 +172,23 @@ const LogoutService = async (res) => {
   return res.status(OK).json({ ms: "Đăng xuất thành công!" });
 };
 
+//get currentUser
+const getCurrentUser = async (req, res) => {
+  const token = req.headers.authorization;
+
+  if (token) {
+    const accessToken = token.split(" ")[1];
+    jwt.verify(accessToken, configs.key.private, async (err, user) => {
+      if (err) {
+        return res.status(FORBIDDEN).json(error("Token không hợp lệ"));
+      }
+
+      const getUser = await db.User.findOne({ where: { id: user.id } });
+      return res.status(OK).json(success(getUser));
+    });
+  }
+};
+
 const sendMailService = async (req, res) => {
   try {
     const validationResult = emailSchema.validate(req.body);
@@ -268,4 +285,5 @@ export {
   LogoutService,
   sendMailService,
   forgotPassService,
+  getCurrentUser,
 };
