@@ -31,6 +31,10 @@ import {
   handleGetNewsComment,
   handleUpdateNews,
 } from "../controllers/news.Controller";
+import {
+  handleGeDetailProduct,
+  handleGetAllProduct,
+} from "../controllers/product.Controller";
 
 let router = express.Router();
 let routerAdmin = express.Router();
@@ -64,6 +68,11 @@ const initWebRouter = (app) => {
   router.delete("/news/:id", handleDeleteNews);
   router.get("/newsComment/:idNews", handleGetNewsComment); //get comment trong từng blog
   router.post("/newsComment", handleAddNewsComment);
+
+  //product
+
+  router.get("/product", handleGetAllProduct);
+  router.get("/product/:id", handleGeDetailProduct);
 
   return app.use("/api/v1", router);
 };
