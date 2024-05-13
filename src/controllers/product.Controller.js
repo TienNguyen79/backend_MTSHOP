@@ -3,6 +3,8 @@ const { error } = require("../results/handle.results");
 const {
   GetAllProductService,
   getDetailsProduct,
+  getQuantityvariantService,
+  addProductService,
 } = require("../services/product.Service");
 
 const handleGetAllProduct = async (req, res) => {
@@ -25,4 +27,29 @@ const handleGeDetailProduct = async (req, res) => {
   }
 };
 
-export { handleGetAllProduct, handleGeDetailProduct };
+const handleQuantityvariant = async (req, res) => {
+  try {
+    let data = await getQuantityvariantService(req, res);
+
+    return data;
+  } catch (error1) {
+    return res.status(INTERNAL_SERVER_ERROR).json(error(error1));
+  }
+};
+
+const handleAddProduct = async (req, res) => {
+  try {
+    let data = await addProductService(req, res);
+
+    return data;
+  } catch (error1) {
+    return res.status(INTERNAL_SERVER_ERROR).json(error(error1));
+  }
+};
+
+export {
+  handleGetAllProduct,
+  handleGeDetailProduct,
+  handleQuantityvariant,
+  handleAddProduct,
+};
