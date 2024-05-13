@@ -29,6 +29,10 @@ module.exports = {
         type: Sequelize.DECIMAL(12, 3),
       },
 
+      sold: {
+        type: Sequelize.INTEGER,
+      },
+
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,

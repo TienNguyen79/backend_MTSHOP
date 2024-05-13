@@ -11,9 +11,6 @@ module.exports = (sequelize, DataTypes) => {
       Attribute.hasMany(models.AttributeValue, {
         foreignKey: "attributeId",
       });
-      Attribute.hasMany(models.VariantAttributeValue, {
-        foreignKey: "attributeId",
-      });
     }
   }
   Attribute.init(

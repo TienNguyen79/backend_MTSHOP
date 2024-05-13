@@ -11,15 +11,15 @@ module.exports = (sequelize, DataTypes) => {
       AttributeValue.belongsTo(models.Attribute, {
         foreignKey: "attributeId",
       });
-      AttributeValue.hasMany(models.VariantAttributeValue, {
-        foreignKey: "attributeValueId",
-      });
+      // AttributeValue.hasMany(models.ProductDetails, {
+      //   foreignKey: "attributeValueId",
+      // });
     }
   }
   AttributeValue.init(
     {
       attributeId: DataTypes.INTEGER,
-      name: DataTypes.STRING,
+      description: DataTypes.STRING,
     },
     {
       sequelize,
