@@ -5,6 +5,10 @@ const {
   getDetailsProduct,
   getQuantityvariantService,
   addProductService,
+  updateProductService,
+  updateQuantityVariantService,
+  deleteProductService,
+  deleteVariantProductService,
 } = require("../services/product.Service");
 
 const handleGetAllProduct = async (req, res) => {
@@ -47,9 +51,52 @@ const handleAddProduct = async (req, res) => {
   }
 };
 
+const handleUpdateProduct = async (req, res) => {
+  try {
+    let data = await updateProductService(req, res);
+
+    return data;
+  } catch (error1) {
+    return res.status(INTERNAL_SERVER_ERROR).json(error(error1));
+  }
+};
+
+const handleUpdateQuantityVariantProduct = async (req, res) => {
+  try {
+    let data = await updateQuantityVariantService(req, res);
+
+    return data;
+  } catch (error1) {
+    return res.status(INTERNAL_SERVER_ERROR).json(error(error1));
+  }
+};
+
+const handleDeleteProduct = async (req, res) => {
+  try {
+    let data = await deleteProductService(req, res);
+
+    return data;
+  } catch (error1) {
+    return res.status(INTERNAL_SERVER_ERROR).json(error(error1));
+  }
+};
+
+const handleDeleteVariantProduct = async (req, res) => {
+  try {
+    let data = await deleteVariantProductService(req, res);
+
+    return data;
+  } catch (error1) {
+    return res.status(INTERNAL_SERVER_ERROR).json(error(error1));
+  }
+};
 export {
   handleGetAllProduct,
   handleGeDetailProduct,
   handleQuantityvariant,
   handleAddProduct,
+  handleUpdateProduct,
+  handleUpdateQuantityVariantProduct,
+  handleDeleteProduct,
+  handleDeleteVariantProduct,
 };

@@ -33,9 +33,13 @@ import {
 } from "../controllers/news.Controller";
 import {
   handleAddProduct,
+  handleDeleteProduct,
+  handleDeleteVariantProduct,
   handleGeDetailProduct,
   handleGetAllProduct,
   handleQuantityvariant,
+  handleUpdateProduct,
+  handleUpdateQuantityVariantProduct,
 } from "../controllers/product.Controller";
 
 let router = express.Router();
@@ -77,6 +81,10 @@ const initWebRouter = (app) => {
   router.get("/product/:id", handleGeDetailProduct);
   router.get("/product/getQuantity/:id", handleQuantityvariant);
   router.post("/product", handleAddProduct);
+  router.put("/product/:id", handleUpdateProduct);
+  router.put("/product/variantProduct/:id", handleUpdateQuantityVariantProduct);
+  router.delete("/product/:id", handleDeleteProduct);
+  router.delete("/product/variantProduct/:id", handleDeleteVariantProduct);
 
   return app.use("/api/v1", router);
 };
