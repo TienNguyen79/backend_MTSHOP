@@ -2,6 +2,7 @@ import { parsePricetoVn } from "../commom/funtion";
 import { BAD_REQUEST, NOT_FOUND, OK } from "../constant/http.status";
 import db from "../models";
 import { error, success } from "../results/handle.results";
+import { productValidate } from "../validate/product.Validate";
 
 // get all product
 const GetAllProductService = async (req, res) => {
@@ -39,9 +40,10 @@ const GetAllProductService = async (req, res) => {
         [{ model: db.ProductImage, as: "image" }, "default", "DESC"], // Sắp xếp theo trường 'default', giảm dần (true sẽ được đưa lên đầu)
       ],
     });
-    const resultsJson = JSON.stringify(results, null, 2); // Biến JSON thành chuỗi
+    const resultsJson = JSON.stringify(results, null, 2); // Biến JSON thành chuỗi để cho đúng định dạng
     const resultsParse = JSON.parse(resultsJson); // Chuyển chuỗi JSON thành đối tượng JavaScript
 
+    // mục đích chuyển đổi trong productDetails từ hiển thị id ra name
     const parsedResults = await Promise.all(
       resultsParse.map(async (item) => {
         const parsedProductDetails = await Promise.all(
@@ -59,7 +61,6 @@ const GetAllProductService = async (req, res) => {
 
               // Kiểm tra xem có thuộc tính size trong properties không
               if (size) {
-                console.log("🚀 ~ box ~ parsedProperties:", size.description);
                 parsedProperties.size = size.description;
               }
 
@@ -239,12 +240,20 @@ const getQuantityvariantService = async (req, res) => {
 
 const addProductService = async (req, res) => {
   try {
+    const validationResult = productValidate.validate(req.body);
+
+    if (validationResult.error) {
+      return res
+        .status(BAD_REQUEST)
+        .json(error(validationResult.error.details[0].message));
+    }
+
     const categoryId = parseInt(req.body.categoryId);
     const discount = parseInt(req.body.discount);
     const price = parseInt(req.body.price);
     const quantity = parseInt(req.body.quantity);
 
-    const { name, description, properties } = req.body;
+    const { name, description, properties, image } = req.body;
 
     const result1 = await db.Product.create({
       name: name,
@@ -266,6 +275,15 @@ const addProductService = async (req, res) => {
             properties: { size: idSize, color: idColor },
           });
         }
+      }
+
+      // thêm ảnh, link ảnh đầu tiên trong mảng là ảnh chính
+      for (let i = 0; i <= image.length - 1; i++) {
+        const AddArrImg = await db.ProductImage.create({
+          default: i === 0 ? true : false,
+          url: image[i],
+          productId: result1.id,
+        });
       }
 
       // phần dưới cop giống GetproductDetails
