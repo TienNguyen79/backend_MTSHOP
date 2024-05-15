@@ -1,6 +1,7 @@
 ("use strict");
 
 const { faker } = require("@faker-js/faker");
+const db = require("../models");
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
@@ -27,6 +28,21 @@ module.exports = {
       const price = (Math.floor(Math.random() * (1000 - 1 + 1)) + 1) * 1000; //tạo số ngẫu nhiên trong khoảng từ 1 đến 1000, sau đó nhân nó với 1000
       const discount = Math.floor(Math.random() * 99) + 1;
       const total = Math.floor((price * (100 - discount)) / 100);
+
+      const getRating = await db.Rating.findAll({
+        where: { productId: i + 1 },
+        raw: true,
+      });
+
+      const sumRate = getRating?.reduce(
+        (accumulator, currentValue) =>
+          accumulator + parseInt(currentValue.rate),
+        0
+      );
+
+      const averageRate =
+        getRating.length > 0 ? Math.round(sumRate / getRating.length) : 0;
+
       Products.push({
         name: faker.lorem.word({
           length: { min: 10, max: 30 },
@@ -38,9 +54,10 @@ module.exports = {
         discount: discount,
         total: total,
         sold: Math.floor(Math.random() * 100),
+        averageRating: averageRate,
         createdAt: new Date(),
         updatedAt: new Date(),
-        // deletedAt: null,
+        deletedAt: null,
       });
     }
 

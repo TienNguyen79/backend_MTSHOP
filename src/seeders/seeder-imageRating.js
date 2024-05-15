@@ -14,28 +14,25 @@ module.exports = {
      * }], {});
      */
 
-    await queryInterface.bulkDelete("Ratings", null, {});
+    await queryInterface.bulkDelete("ImageRatings", null, {});
 
     // Đặt lại trình tự tăng tự động cho trường ID
     await queryInterface.sequelize.query(
-      "ALTER TABLE Ratings AUTO_INCREMENT = 1;"
+      "ALTER TABLE ImageRatings AUTO_INCREMENT = 1;"
     );
 
-    const Ratings = [];
+    const ImageRatings = [];
 
-    for (let i = 0; i < 50; i++) {
-      Ratings.push({
-        userId: Math.floor(Math.random() * 8) + 1,
-        productId: Math.floor(Math.random() * 30) + 1,
-        orderId: Math.floor(Math.random() * 10) + 1,
-        description: faker.lorem.paragraphs(),
-        rate: Math.floor(Math.random() * 5) + 1,
+    for (let i = 0; i < 20; i++) {
+      ImageRatings.push({
+        url: faker.image.url(),
+        rateId: Math.floor(Math.random() * 8) + 1,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
     }
 
-    return queryInterface.bulkInsert("Ratings", Ratings);
+    return queryInterface.bulkInsert("ImageRatings", ImageRatings);
   },
 
   down: async (queryInterface, Sequelize) => {
@@ -45,6 +42,6 @@ module.exports = {
      * Example:
      * await queryInterface.bulkDelete('People', null, {});
      */
-    return queryInterface.bulkDelete("Ratings", null, {});
+    return queryInterface.bulkDelete("ImageRatings", null, {});
   },
 };

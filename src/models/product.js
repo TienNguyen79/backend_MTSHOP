@@ -34,10 +34,12 @@ module.exports = (sequelize, DataTypes) => {
       discount: DataTypes.INTEGER,
       total: DataTypes.DECIMAL(12, 3),
       sold: DataTypes.INTEGER,
+      averageRating: DataTypes.INTEGER,
     },
     {
       sequelize,
       modelName: "Product",
+      paranoid: true, // Kích hoạt chế độ paranoid để sử dụng soft delete
     }
   );
   return Product;

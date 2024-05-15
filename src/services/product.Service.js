@@ -226,17 +226,7 @@ const getDetailsProduct = async (req, res) => {
         productVariantUnique: result2,
       };
 
-      const sumRate = data?.Ratings.reduce(
-        (accumulator, currentValue) =>
-          accumulator + parseInt(currentValue.rate),
-        0
-      );
-
-      const averageRate = Math.round(sumRate / data?.Ratings.length) || 0;
-
-      const overview = { ...data, pointRate: averageRate };
-
-      return res.status(OK).json(success(overview));
+      return res.status(OK).json(success(data));
     } else {
       return res.status(NOT_FOUND).json(success("Sản phẩm không tồn tại"));
     }
@@ -292,6 +282,7 @@ const addProductService = async (req, res) => {
       discount: discount,
       total: Math.floor(price * ((100 - discount) / 100)),
       sold: 0,
+      averageRating: 0,
     });
 
     //nếu tạo sản phẩm thành công
@@ -606,6 +597,11 @@ const filterProductService = async (req, res) => {
       whereCondition.categoryId = parseInt(category);
     }
 
+    //filter averageRating
+    if (rate) {
+      whereCondition.averageRating = parseInt(rate);
+    }
+
     //filter theo khoảng giá gte: >= ; lte: <=
     if (!isNaN(minPrice) && !isNaN(maxPrice)) {
       whereCondition.total = {
@@ -625,16 +621,16 @@ const filterProductService = async (req, res) => {
     const includeCondition = [
       {
         model: db.ProductDetails,
-        // where:
-        //   sizes.length > 0
-        //     ? {
-        //         properties: {
-        //           [db.Sequelize.Op.or]: sizes.map((size) => ({
-        //             size,
-        //           })),
-        //         },
-        //       }
-        //     : {},
+        where:
+          sizes.length > 0
+            ? {
+                properties: {
+                  [db.Sequelize.Op.or]: sizes.map((size) => ({
+                    size,
+                  })),
+                },
+              }
+            : null,
         // required: true, // Đảm bảo chỉ trả về các sản phẩm có ProductDetails
       },
       {
@@ -645,21 +641,12 @@ const filterProductService = async (req, res) => {
         model: db.Rating,
       },
     ];
-    console.log(
-      "🚀 ~ filterProductService ~ includeCondition:",
-      includeCondition
-    );
 
     // phục vụ lấy tổng kết quả tìm được
 
     const getFullProduct = await db.Product.findAll({
       include: includeCondition,
       where: whereCondition,
-      // order: [
-      //   ["createdAt", sortBy], // Sắp xếp theo 'createdAt'
-      //   [{ model: db.ProductImage, as: "image" }, "default", "DESC"], // Sắp xếp theo trường 'default', giảm dần (true sẽ được đưa lên đầu)
-      // ],
-      limit: 9999,
     });
 
     const resultsJson = JSON.stringify(getFullProduct, null, 2); // Biến JSON thành chuỗi
@@ -667,10 +654,6 @@ const filterProductService = async (req, res) => {
     //-----------------------------------------------
 
     const results = await db.Product.findAll({
-      // include: [
-      //   { model: db.ProductDetails },
-      //   { model: db.ProductImage, as: "image" },
-      // ],
       include: includeCondition,
       where: whereCondition,
 
@@ -681,94 +664,9 @@ const filterProductService = async (req, res) => {
         [{ model: db.ProductImage, as: "image" }, "default", "DESC"], // Sắp xếp theo trường 'default', giảm dần (true sẽ được đưa lên đầu)
       ],
     });
-    // const resultsJson = JSON.stringify(results, null, 2); // Biến JSON thành chuỗi để cho đúng định dạng
-    // const resultsParse = JSON.parse(resultsJson); // Chuyển chuỗi JSON thành đối tượng JavaScript
-
-    // mục đích chuyển đổi trong productDetails từ hiển thị id ra name
-    // const parsedResults = await Promise.all(
-    //   resultsParse.map(async (item) => {
-    //     const parsedProductDetails = await Promise.all(
-    //       item.ProductDetails.map(async (detail) => {
-    //         let parsedProperties = {};
-
-    //         try {
-    //           parsedProperties = JSON.parse(detail.properties || "{}"); // từ JSON chuyển đồi sang js
-
-    //           // Tìm tiêu đề tương ứng từ bảng AttributeValue
-    //           const size = await db.AttributeValue.findOne({
-    //             where: { id: parsedProperties.size },
-    //             raw: true,
-    //           });
-
-    //           // Kiểm tra xem có thuộc tính size trong properties không
-    //           if (size) {
-    //             parsedProperties.size = size.description;
-    //           }
-
-    //           // Kiểm tra xem có thuộc tính color trong properties không
-    //           if (parsedProperties.color) {
-    //             // Tìm tiêu đề tương ứng từ bảng AttributeValue
-    //             const color = await db.AttributeValue.findOne({
-    //               where: { id: parsedProperties.color },
-    //               raw: true,
-    //             });
-    //             if (color) {
-    //               parsedProperties.color = color.description;
-    //             }
-    //           }
-    //         } catch (error) {
-    //           console.error("Error parsing JSON:", error);
-    //         }
-
-    //         return {
-    //           ...detail,
-    //           properties: parsedProperties,
-    //         };
-    //       })
-    //     );
-
-    //     return {
-    //       ...item,
-    //       ProductDetails: parsedProductDetails,
-    //     };
-    //   })
-    // );
-
-    const resultsJson2 = JSON.stringify(results, null, 2); // Biến JSON thành chuỗi để cho đúng định dạng
-    const resultsParse2 = JSON.parse(resultsJson2); // Chuyển chuỗi JSON thành đối tượng JavaScript
-    // lấy  điểm đánh giá
-
-    const overview = resultsParse2.map((item) => {
-      const sumRate = item?.Ratings?.reduce(
-        (accumulator, currentValue) =>
-          accumulator + parseInt(currentValue.rate),
-        0
-      );
-      const averageRate = Math.round(sumRate / item.Ratings.length);
-
-      return { ...item, pointRate: averageRate ? averageRate : 0 };
-    });
-
-    // getFullProductParse
-
-    // const overview2 = getFullProductParse.map((item) => {
-    //   const sumRate = item?.Ratings?.reduce(
-    //     (accumulator, currentValue) =>
-    //       accumulator + parseInt(currentValue.rate),
-    //     0
-    //   );
-    //   const averageRate = Math.round(sumRate / item.Ratings.length);
-
-    //   return { ...item, pointRate: averageRate ? averageRate : 0 };
-    // });
-
-    // // if (rate) {
-    // //   const result = overview2.filter((item) => item.pointRate === rate);
-
-    // // }
 
     return res.status(OK).json(
-      success(overview, {
+      success(results, {
         page: page,
         limit: limit,
         totalPages: parseInt(Math.ceil(getFullProduct.length / limit)),

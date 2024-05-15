@@ -37,6 +37,7 @@ const getAllNewsService = async (req, res) => {
       nest: true,
       limit: limit, // Áp dụng giới hạn
       offset: offset, // Lấy data từ offset trở đi
+      order: [["createdAt", "DESC"]],
     });
 
     return res.status(OK).json(
@@ -184,6 +185,7 @@ const getNewsComment = async (req, res) => {
         nest: true,
         limit: limit, // Áp dụng giới hạn
         offset: offset, // Lấy data từ offset trở đi
+        order: [["createdAt", "DESC"]],
       });
 
       return res.status(OK).json(

@@ -32,6 +32,9 @@ module.exports = {
       sold: {
         type: Sequelize.INTEGER,
       },
+      averageRating: {
+        type: Sequelize.INTEGER,
+      },
 
       createdAt: {
         allowNull: false,
@@ -39,6 +42,11 @@ module.exports = {
       },
       updatedAt: {
         allowNull: false,
+        type: Sequelize.DATE,
+      },
+      deletedAt: {
+        // Thêm cột deletedAt để thực hiện soft delete
+        allowNull: true, // Cho phép chấp nhận giá trị NULL
         type: Sequelize.DATE,
       },
     });

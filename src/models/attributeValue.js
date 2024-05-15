@@ -19,7 +19,7 @@ module.exports = (sequelize, DataTypes) => {
   AttributeValue.init(
     {
       attributeId: DataTypes.INTEGER,
-      description: DataTypes.STRING,
+      description: DataTypes.TEXT,
     },
     {
       sequelize,

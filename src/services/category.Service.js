@@ -32,6 +32,7 @@ const GetAllcategoryService = async (req, res) => {
       nest: true,
       limit: limit, // Áp dụng giới hạn
       offset: offset, // Lấy data từ offset trở đi
+      order: [["createdAt", "DESC"]],
     });
 
     const results2 = await db.Category.findAll({
