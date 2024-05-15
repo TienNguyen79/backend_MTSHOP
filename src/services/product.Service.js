@@ -36,11 +36,13 @@ const GetAllProductService = async (req, res) => {
       include: [
         { model: db.ProductDetails },
         { model: db.ProductImage, as: "image" },
+        { model: db.Rating },
       ],
       where: whereCondition,
       limit: limit, // Áp dụng giới hạn
       offset: offset, // Lấy data từ offset trở đi
       order: [
+        ["createdAt", "DESC"],
         [{ model: db.ProductImage, as: "image" }, "default", "DESC"], // Sắp xếp theo trường 'default', giảm dần (true sẽ được đưa lên đầu)
       ],
     });
@@ -97,8 +99,20 @@ const GetAllProductService = async (req, res) => {
       })
     );
 
+    // lấy  điểm đánh giá
+    const overview = parsedResults.map((item) => {
+      const sumRate = item?.Ratings?.reduce(
+        (accumulator, currentValue) =>
+          accumulator + parseInt(currentValue.rate),
+        0
+      );
+      const averageRate = Math.round(sumRate / item.Ratings.length);
+
+      return { ...item, pointRate: averageRate ? averageRate : 0 };
+    });
+
     return res.status(OK).json(
-      success(parsedResults, {
+      success(overview, {
         page: page,
         limit: limit,
         totalPages: parseInt(Math.ceil(getFullProduct.length / limit)),
@@ -123,6 +137,7 @@ const getDetailsProduct = async (req, res) => {
         include: [
           { model: db.ProductDetails },
           { model: db.ProductImage, as: "image" },
+          { model: db.Rating },
         ],
 
         order: [
@@ -211,7 +226,17 @@ const getDetailsProduct = async (req, res) => {
         productVariantUnique: result2,
       };
 
-      return res.status(OK).json(success(data));
+      const sumRate = data?.Ratings.reduce(
+        (accumulator, currentValue) =>
+          accumulator + parseInt(currentValue.rate),
+        0
+      );
+
+      const averageRate = Math.round(sumRate / data?.Ratings.length) || 0;
+
+      const overview = { ...data, pointRate: averageRate };
+
+      return res.status(OK).json(success(overview));
     } else {
       return res.status(NOT_FOUND).json(success("Sản phẩm không tồn tại"));
     }
@@ -468,7 +493,7 @@ const updateProductService = async (req, res) => {
     if (result1) {
       return res.status(OK).json(success("Cập nhật thành công !"));
     } else {
-      return res.status(OK).json(success("Cập nhật thất bại !"));
+      return res.status(BAD_REQUEST).json(success("Cập nhật thất bại !"));
     }
   } catch (error) {
     console.log("🚀 ~ addProductService ~ error:", error);
@@ -509,7 +534,7 @@ const updateQuantityVariantService = async (req, res) => {
     if (updateQuantity) {
       return res.status(OK).json(success("Cập nhật thành công !"));
     } else {
-      return res.status(OK).json(success("Cập nhật thất bại!"));
+      return res.status(BAD_REQUEST).json(success("Cập nhật thất bại!"));
     }
   } catch (error) {
     console.log("🚀 ~ updateQuantityVariantService ~ error:", error);
@@ -528,7 +553,7 @@ const deleteProductService = async (req, res) => {
     if (deleteProduct) {
       return res.status(OK).json(success("Xóa thành công !"));
     } else {
-      return res.status(OK).json(success("Xóa thất bại !"));
+      return res.status(BAD_REQUEST).json(success("Xóa thất bại !"));
     }
   } catch (error) {
     console.log("🚀 ~ deleteProduct ~ error:", error);
@@ -547,10 +572,211 @@ const deleteVariantProductService = async (req, res) => {
     if (deleteVariantProduct) {
       return res.status(OK).json(success("Xóa thành công !"));
     } else {
-      return res.status(OK).json(success("Xóa thất bại !"));
+      return res.status(BAD_REQUEST).json(success("Xóa thất bại !"));
     }
   } catch (error) {
     console.log("🚀 ~ deleteVariantProduct ~ error:", error);
+  }
+};
+
+//filter Product
+
+const filterProductService = async (req, res) => {
+  // còn filter theo rate
+  try {
+    const limit = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page) || 1;
+    const name = req.query.name;
+    const category = parseInt(req.query.category);
+    const offset = (page - 1) * limit;
+    const sortBy = req.query.sortBy === "asc" ? "ASC" : "DESC";
+    const minPrice = parseInt(req.query.minPrice); // Giá thấp nhất
+    const maxPrice = parseInt(req.query.maxPrice); // Giá cao nhất
+    const rate = parseInt(req.query.rate);
+    const sizes = req.query.sizes ? req.query.sizes.split(",").map(Number) : []; // Kích cỡ, chuyển thành mảng số
+
+    // filter name
+    const whereCondition = {};
+    if (name) {
+      whereCondition.name = { [db.Sequelize.Op.like]: `%${name}%` };
+    }
+
+    //filter category
+    if (category) {
+      whereCondition.categoryId = parseInt(category);
+    }
+
+    //filter theo khoảng giá gte: >= ; lte: <=
+    if (!isNaN(minPrice) && !isNaN(maxPrice)) {
+      whereCondition.total = {
+        [db.Sequelize.Op.gte]: minPrice,
+        [db.Sequelize.Op.lte]: maxPrice,
+      };
+    } else if (!isNaN(minPrice)) {
+      whereCondition.total = {
+        [db.Sequelize.Op.gte]: minPrice,
+      };
+    } else if (!isNaN(maxPrice)) {
+      whereCondition.total = {
+        [db.Sequelize.Op.lte]: maxPrice,
+      };
+    }
+
+    const includeCondition = [
+      {
+        model: db.ProductDetails,
+        // where:
+        //   sizes.length > 0
+        //     ? {
+        //         properties: {
+        //           [db.Sequelize.Op.or]: sizes.map((size) => ({
+        //             size,
+        //           })),
+        //         },
+        //       }
+        //     : {},
+        // required: true, // Đảm bảo chỉ trả về các sản phẩm có ProductDetails
+      },
+      {
+        model: db.ProductImage,
+        as: "image",
+      },
+      {
+        model: db.Rating,
+      },
+    ];
+    console.log(
+      "🚀 ~ filterProductService ~ includeCondition:",
+      includeCondition
+    );
+
+    // phục vụ lấy tổng kết quả tìm được
+
+    const getFullProduct = await db.Product.findAll({
+      include: includeCondition,
+      where: whereCondition,
+      // order: [
+      //   ["createdAt", sortBy], // Sắp xếp theo 'createdAt'
+      //   [{ model: db.ProductImage, as: "image" }, "default", "DESC"], // Sắp xếp theo trường 'default', giảm dần (true sẽ được đưa lên đầu)
+      // ],
+      limit: 9999,
+    });
+
+    const resultsJson = JSON.stringify(getFullProduct, null, 2); // Biến JSON thành chuỗi
+    const getFullProductParse = JSON.parse(resultsJson); // Chuyển chuỗi JSON thành đối tượng JavaScript
+    //-----------------------------------------------
+
+    const results = await db.Product.findAll({
+      // include: [
+      //   { model: db.ProductDetails },
+      //   { model: db.ProductImage, as: "image" },
+      // ],
+      include: includeCondition,
+      where: whereCondition,
+
+      limit: limit, // Áp dụng giới hạn
+      offset: offset, // Lấy data từ offset trở đi
+      order: [
+        ["createdAt", sortBy], // Sắp xếp theo 'createdAt'
+        [{ model: db.ProductImage, as: "image" }, "default", "DESC"], // Sắp xếp theo trường 'default', giảm dần (true sẽ được đưa lên đầu)
+      ],
+    });
+    // const resultsJson = JSON.stringify(results, null, 2); // Biến JSON thành chuỗi để cho đúng định dạng
+    // const resultsParse = JSON.parse(resultsJson); // Chuyển chuỗi JSON thành đối tượng JavaScript
+
+    // mục đích chuyển đổi trong productDetails từ hiển thị id ra name
+    // const parsedResults = await Promise.all(
+    //   resultsParse.map(async (item) => {
+    //     const parsedProductDetails = await Promise.all(
+    //       item.ProductDetails.map(async (detail) => {
+    //         let parsedProperties = {};
+
+    //         try {
+    //           parsedProperties = JSON.parse(detail.properties || "{}"); // từ JSON chuyển đồi sang js
+
+    //           // Tìm tiêu đề tương ứng từ bảng AttributeValue
+    //           const size = await db.AttributeValue.findOne({
+    //             where: { id: parsedProperties.size },
+    //             raw: true,
+    //           });
+
+    //           // Kiểm tra xem có thuộc tính size trong properties không
+    //           if (size) {
+    //             parsedProperties.size = size.description;
+    //           }
+
+    //           // Kiểm tra xem có thuộc tính color trong properties không
+    //           if (parsedProperties.color) {
+    //             // Tìm tiêu đề tương ứng từ bảng AttributeValue
+    //             const color = await db.AttributeValue.findOne({
+    //               where: { id: parsedProperties.color },
+    //               raw: true,
+    //             });
+    //             if (color) {
+    //               parsedProperties.color = color.description;
+    //             }
+    //           }
+    //         } catch (error) {
+    //           console.error("Error parsing JSON:", error);
+    //         }
+
+    //         return {
+    //           ...detail,
+    //           properties: parsedProperties,
+    //         };
+    //       })
+    //     );
+
+    //     return {
+    //       ...item,
+    //       ProductDetails: parsedProductDetails,
+    //     };
+    //   })
+    // );
+
+    const resultsJson2 = JSON.stringify(results, null, 2); // Biến JSON thành chuỗi để cho đúng định dạng
+    const resultsParse2 = JSON.parse(resultsJson2); // Chuyển chuỗi JSON thành đối tượng JavaScript
+    // lấy  điểm đánh giá
+
+    const overview = resultsParse2.map((item) => {
+      const sumRate = item?.Ratings?.reduce(
+        (accumulator, currentValue) =>
+          accumulator + parseInt(currentValue.rate),
+        0
+      );
+      const averageRate = Math.round(sumRate / item.Ratings.length);
+
+      return { ...item, pointRate: averageRate ? averageRate : 0 };
+    });
+
+    // getFullProductParse
+
+    // const overview2 = getFullProductParse.map((item) => {
+    //   const sumRate = item?.Ratings?.reduce(
+    //     (accumulator, currentValue) =>
+    //       accumulator + parseInt(currentValue.rate),
+    //     0
+    //   );
+    //   const averageRate = Math.round(sumRate / item.Ratings.length);
+
+    //   return { ...item, pointRate: averageRate ? averageRate : 0 };
+    // });
+
+    // // if (rate) {
+    // //   const result = overview2.filter((item) => item.pointRate === rate);
+
+    // // }
+
+    return res.status(OK).json(
+      success(overview, {
+        page: page,
+        limit: limit,
+        totalPages: parseInt(Math.ceil(getFullProduct.length / limit)),
+        totalResults: getFullProductParse.length,
+      })
+    );
+  } catch (error) {
+    console.log("🚀 ~ GetAllProductService ~ error:", error);
   }
 };
 export {
@@ -562,4 +788,5 @@ export {
   updateQuantityVariantService,
   deleteProductService,
   deleteVariantProductService,
+  filterProductService,
 };

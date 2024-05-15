@@ -35,6 +35,7 @@ import {
   handleAddProduct,
   handleDeleteProduct,
   handleDeleteVariantProduct,
+  handleFilterProduct,
   handleGeDetailProduct,
   handleGetAllProduct,
   handleQuantityvariant,
@@ -85,6 +86,7 @@ const initWebRouter = (app) => {
   router.put("/product/variantProduct/:id", handleUpdateQuantityVariantProduct);
   router.delete("/product/:id", handleDeleteProduct);
   router.delete("/product/variantProduct/:id", handleDeleteVariantProduct);
+  router.get("/productFilter", handleFilterProduct);
 
   return app.use("/api/v1", router);
 };
