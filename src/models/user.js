@@ -14,6 +14,8 @@ module.exports = (sequelize, DataTypes) => {
       User.hasMany(models.NewsComment, { foreignKey: "userId" });
 
       User.hasMany(models.Address, { foreignKey: "userId" });
+
+      User.hasOne(models.Cart, { foreignKey: "userId" });
     }
   }
   User.init(

@@ -42,6 +42,12 @@ import {
   handleUpdateProduct,
   handleUpdateQuantityVariantProduct,
 } from "../controllers/product.Controller";
+import {
+  handleAddtoCart,
+  handleDeleteCart,
+  handleGetAllCart,
+  handleUpdateQuantityProductInCart,
+} from "../controllers/cart.Controller";
 
 let router = express.Router();
 let routerAdmin = express.Router();
@@ -87,6 +93,13 @@ const initWebRouter = (app) => {
   router.delete("/product/:id", handleDeleteProduct);
   router.delete("/product/variantProduct/:id", handleDeleteVariantProduct);
   router.get("/productFilter", handleFilterProduct);
+
+  //cart
+
+  router.get("/cart", verifyToken, handleGetAllCart);
+  router.post("/cart", verifyToken, handleAddtoCart);
+  router.put("/cart", verifyToken, handleUpdateQuantityProductInCart);
+  router.delete("/cart/:id", verifyToken, handleDeleteCart);
 
   return app.use("/api/v1", router);
 };
