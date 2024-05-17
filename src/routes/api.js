@@ -48,6 +48,10 @@ import {
   handleGetAllCart,
   handleUpdateQuantityProductInCart,
 } from "../controllers/cart.Controller";
+import {
+  handleGetAllOrder,
+  handleOrderProduct,
+} from "../controllers/order.Controller";
 
 let router = express.Router();
 let routerAdmin = express.Router();
@@ -100,6 +104,10 @@ const initWebRouter = (app) => {
   router.post("/cart", verifyToken, handleAddtoCart);
   router.put("/cart", verifyToken, handleUpdateQuantityProductInCart);
   router.delete("/cart/:id", verifyToken, handleDeleteCart);
+
+  //order
+  router.get("/order", handleGetAllOrder);
+  router.post("/order", verifyToken, handleOrderProduct); // đặt hàng
 
   return app.use("/api/v1", router);
 };
