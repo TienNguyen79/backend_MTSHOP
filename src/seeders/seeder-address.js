@@ -14,17 +14,17 @@ module.exports = {
      * }], {});
      */
 
-    await queryInterface.bulkDelete("Address", null, {});
+    await queryInterface.bulkDelete("Addresses", null, {});
 
     // Đặt lại trình tự tăng tự động cho trường ID
     await queryInterface.sequelize.query(
-      "ALTER TABLE Address AUTO_INCREMENT = 1;"
+      "ALTER TABLE Addresses AUTO_INCREMENT = 1;"
     );
 
-    const Address = [];
+    const Addresses = [];
 
     for (let i = 0; i < 30; i++) {
-      Address.push({
+      Addresses.push({
         address: faker.lorem.paragraph(),
         userId: Math.floor(Math.random() * 10) + 1,
         createdAt: new Date(),
@@ -32,7 +32,7 @@ module.exports = {
       });
     }
 
-    return queryInterface.bulkInsert("Address", Address);
+    return queryInterface.bulkInsert("Addresses", Addresses);
   },
 
   down: async (queryInterface, Sequelize) => {
@@ -42,6 +42,6 @@ module.exports = {
      * Example:
      * await queryInterface.bulkDelete('People', null, {});
      */
-    return queryInterface.bulkDelete("Address", null, {});
+    return queryInterface.bulkDelete("Addresses", null, {});
   },
 };

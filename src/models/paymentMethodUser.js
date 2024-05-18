@@ -15,12 +15,17 @@ module.exports = (sequelize, DataTypes) => {
       PaymentMethodUser.belongsTo(models.User, {
         foreignKey: "userId",
       });
+
+      PaymentMethodUser.belongsTo(models.Order, {
+        foreignKey: "orderId",
+      });
     }
   }
   PaymentMethodUser.init(
     {
       systemId: DataTypes.STRING,
       userId: DataTypes.INTEGER,
+      orderId: DataTypes.INTEGER,
       cardNumber: DataTypes.STRING,
     },
     {

@@ -27,6 +27,7 @@ module.exports = {
       PaymentMethodUsers.push({
         systemId: Math.floor(Math.random() * 2) + 1,
         userId: Math.floor(Math.random() * 10) + 1,
+        orderId: Math.floor(Math.random() * 10) + 1,
         cardNumber: "",
         createdAt: new Date(),
         updatedAt: new Date(),

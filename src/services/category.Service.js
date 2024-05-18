@@ -3,6 +3,7 @@ import { BAD_REQUEST, NOT_FOUND, OK } from "../constant/http.status";
 import db from "../models";
 import { error, success } from "../results/handle.results";
 import { updateCateValidate } from "../validate/category.Validate";
+import { HIGH_LIMIT } from "../constant/constant.commom";
 const GetAllcategoryService = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
@@ -23,7 +24,7 @@ const GetAllcategoryService = async (req, res) => {
       where: whereCondition,
       raw: true,
       nest: true,
-      limit: 9999,
+      limit: HIGH_LIMIT,
     });
 
     const results1 = await db.Category.findAll({

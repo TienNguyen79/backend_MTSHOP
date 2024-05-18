@@ -1,3 +1,4 @@
+import { HIGH_LIMIT } from "../constant/constant.commom";
 import db from "../models";
 const testService = async () => {
   try {
@@ -16,7 +17,7 @@ const testService = async () => {
     // console.log("🚀 ~ testService ~ results:", results);
 
     const getFullProduct = await db.Product.findAll({
-      limit: 9999,
+      limit: HIGH_LIMIT,
       include: [
         { model: db.ProductDetails },
         { model: db.ProductImage, as: "image" },
