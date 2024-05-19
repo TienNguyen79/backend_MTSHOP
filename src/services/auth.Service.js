@@ -44,6 +44,17 @@ const registerService = async (data, res) => {
         return res.status(BAD_REQUEST).json(error("Email đã tồn tại !"));
       }
 
+      const phoneNumberCheck = await db.User.findOne({
+        where: { phoneNumber: data.phoneNumber },
+        raw: true,
+      });
+
+      if (phoneNumberCheck) {
+        return res
+          .status(BAD_REQUEST)
+          .json(error("Số điện thoại đã tồn tại !"));
+      }
+
       let results = await db.User.create({
         email: data.email,
         password: hashed,
@@ -85,8 +96,8 @@ const loginService = async (data, res) => {
       }
 
       if (user && validPassword) {
-        const { email, roleID, id } = user;
-        const payload = { email, roleID, id };
+        const { email, roleID, id, status } = user;
+        const payload = { email, roleID, id, status };
 
         const accessToken = generateAccessToken(payload);
         const refreshToken = generateRefreshToken(id);
@@ -146,8 +157,8 @@ const refreshTokenService = async (req, res) => {
       raw: true,
     });
 
-    const { email, roleId, id } = user;
-    const payload = { email, roleId, id };
+    const { email, roleId, id, status } = user;
+    const payload = { email, roleId, id, status };
 
     const newaccessToken = generateAccessToken(payload);
     const newRefreshToken = generateRefreshToken(id);

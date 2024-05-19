@@ -245,9 +245,17 @@ const CancelOrderService = async (req, res) => {
 
           const order = await db.Order.findOne({
             where: { id: orderId, userId: user.id },
+            raw: true,
           });
+
           if (!order) {
             return res.status(UNAUTHORIZED).json(error("Bạn Không có quyền!"));
+          }
+
+          if (order.orderState === "0") {
+            return res
+              .status(UNAUTHORIZED)
+              .json(error("Đơn hàng đã được hủy trước đó !"));
           }
 
           const CancelOrder = await db.Order.update(
@@ -257,6 +265,28 @@ const CancelOrderService = async (req, res) => {
             { where: { id: orderId, userId: user.id } }
           );
           if (CancelOrder) {
+            //tìm tất cả sản phẩm chi tiết trong orderDetails
+            const findOrderDetails = await db.OrderDetails.findAll({
+              where: { orderId: orderId },
+              raw: true,
+            });
+
+            // map xong lấy findProductDetails để lấy số lượng trong database + số lượng mới hiện tại
+            findOrderDetails.map(async (item) => {
+              const findProductDetails = await db.ProductDetails.findOne({
+                where: { id: item.productDetailsId },
+                raw: true,
+              });
+
+              const updateQuantityProductDetails =
+                await db.ProductDetails.update(
+                  {
+                    quantity: findProductDetails.quantity + item.quantity,
+                  },
+                  { where: { id: item.productDetailsId } }
+                );
+            });
+
             return res.status(OK).json(success("Đơn hàng đã được hủy!"));
           } else {
             return res.status(BAD_REQUEST).json(success("Hủy Thất Bại!"));
@@ -271,6 +301,12 @@ const CancelOrderService = async (req, res) => {
             return res.status(BAD_REQUEST).json(error("Order không tồn tại"));
           }
 
+          if (order.orderState === "0") {
+            return res
+              .status(UNAUTHORIZED)
+              .json(error("Đơn hàng đã được hủy trước đó !"));
+          }
+
           const CancelOrder = await db.Order.update(
             {
               orderState: "0",
@@ -278,6 +314,26 @@ const CancelOrderService = async (req, res) => {
             { where: { id: orderId } }
           );
           if (CancelOrder) {
+            const findOrderDetails = await db.OrderDetails.findAll({
+              where: { orderId: orderId },
+              raw: true,
+            });
+
+            findOrderDetails.map(async (item) => {
+              const findProductDetails = await db.ProductDetails.findOne({
+                where: { id: item.productDetailsId },
+                raw: true,
+              });
+
+              const updateQuantityProductDetails =
+                await db.ProductDetails.update(
+                  {
+                    quantity: findProductDetails.quantity + item.quantity,
+                  },
+                  { where: { id: item.productDetailsId } }
+                );
+            });
+
             return res.status(OK).json(success("Đơn hàng đã được hủy!"));
           } else {
             return res.status(BAD_REQUEST).json(success("Hủy Thất Bại!"));

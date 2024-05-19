@@ -55,6 +55,13 @@ import {
   handleOrderProduct,
   handleUpdateStatusOrder,
 } from "../controllers/order.Controller";
+import {
+  handleAddUser,
+  handleBanorUnBan,
+  handleGetAllUser,
+  handleUpdateInfoUser,
+  handledeleteUser,
+} from "../controllers/user.Controller";
 
 let router = express.Router();
 let routerAdmin = express.Router();
@@ -91,7 +98,7 @@ const initWebRouter = (app) => {
 
   //product
 
-  router.get("/product", handleGetAllProduct);
+  router.get("/product", handleGetAllProduct); // có thể lấy các sản phẩm của category tương ứng
   router.get("/product/:id", handleGeDetailProduct);
   router.get("/product/getQuantity/:id", handleQuantityvariant);
   router.post("/product", handleAddProduct);
@@ -114,6 +121,13 @@ const initWebRouter = (app) => {
   router.put("/order/:id", handleUpdateStatusOrder);
   router.put("/cancelOrder/:id", verifyToken, handleCancelOrder); //hủy bên admin
   router.delete("/order/:id", verifyTokenAdminAuth, handleDeleteOrder); //hủy bên admin
+
+  //user
+  router.get("/user", handleGetAllUser);
+  router.patch("/user", verifyToken, handleUpdateInfoUser);
+  router.post("/user", handleAddUser);
+  router.delete("/user/:id", handledeleteUser);
+  router.put("/ban-or-unBan-User/:id", handleBanorUnBan);
 
   return app.use("/api/v1", router);
 };

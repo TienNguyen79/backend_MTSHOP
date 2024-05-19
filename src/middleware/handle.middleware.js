@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import { configs } from "../config/config.jwtkey";
 import { FORBIDDEN, UNAUTHORIZED } from "../constant/http.status";
 import { error } from "../results/handle.results";
-import { statusRole } from "../constant/constant.commom";
+import { statusRole, statusUser } from "../constant/constant.commom";
 
 const verifyToken = (req, res, next) => {
   const token = req.headers.authorization;
@@ -12,6 +12,11 @@ const verifyToken = (req, res, next) => {
     jwt.verify(accessToken, configs.key.private, (err, user) => {
       if (err) {
         return res.status(FORBIDDEN).json(error("Token không hợp lệ"));
+      }
+      if (user.status === statusUser.BAN) {
+        return res
+          .status(FORBIDDEN)
+          .json(error("Tài khoản của bạn đã bị cấm!"));
       }
       req.user = user;
       next();
