@@ -10,6 +10,8 @@ const {
   deleteProductService,
   deleteVariantProductService,
   filterProductService,
+  suggestProductsService,
+  productReviewsService,
 } = require("../services/product.Service");
 
 const handleGetAllProduct = async (req, res) => {
@@ -101,6 +103,26 @@ const handleFilterProduct = async (req, res) => {
     return res.status(INTERNAL_SERVER_ERROR).json(error(error1));
   }
 };
+
+const handleSuggestProducts = async (req, res) => {
+  try {
+    let data = await suggestProductsService(req, res);
+
+    return data;
+  } catch (error1) {
+    return res.status(INTERNAL_SERVER_ERROR).json(error(error1));
+  }
+};
+
+const handleProductReviews = async (req, res) => {
+  try {
+    let data = await productReviewsService(req, res);
+
+    return data;
+  } catch (error1) {
+    return res.status(INTERNAL_SERVER_ERROR).json(error(error1));
+  }
+};
 export {
   handleGetAllProduct,
   handleGeDetailProduct,
@@ -111,4 +133,6 @@ export {
   handleDeleteProduct,
   handleDeleteVariantProduct,
   handleFilterProduct,
+  handleSuggestProducts,
+  handleProductReviews,
 };

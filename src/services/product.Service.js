@@ -1,3 +1,5 @@
+import jwt from "jsonwebtoken";
+import { Op } from "sequelize";
 import { parsePricetoVn } from "../commom/funtion";
 import { HIGH_LIMIT } from "../constant/constant.commom";
 import { BAD_REQUEST, NOT_FOUND, OK } from "../constant/http.status";
@@ -8,7 +10,7 @@ import {
   updateQuantityVariantValidate,
   updateproductValidate,
 } from "../validate/product.Validate";
-
+import { configs } from "../config/config.jwtkey";
 // get all product
 const GetAllProductService = async (req, res) => {
   try {
@@ -16,6 +18,7 @@ const GetAllProductService = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const name = req.query.name;
     const category = parseInt(req.query.category);
+    const topSold = req.query.topSold;
     const offset = (page - 1) * limit;
 
     const whereCondition = {};
@@ -33,6 +36,17 @@ const GetAllProductService = async (req, res) => {
       limit: HIGH_LIMIT,
     });
 
+    const orderCondition = [];
+    if (topSold === "desc") {
+      orderCondition.push(["sold", "DESC"]); // Sắp xếp theo số lượng bán giảm dần
+    }
+    orderCondition.push(["createdAt", "DESC"]);
+    orderCondition.push([
+      { model: db.ProductImage, as: "image" },
+      "default",
+      "DESC",
+    ]); // Sắp xếp theo trường 'default', giảm dần
+
     const results = await db.Product.findAll({
       include: [
         { model: db.ProductDetails },
@@ -42,10 +56,7 @@ const GetAllProductService = async (req, res) => {
       where: whereCondition,
       limit: limit, // Áp dụng giới hạn
       offset: offset, // Lấy data từ offset trở đi
-      order: [
-        ["createdAt", "DESC"],
-        [{ model: db.ProductImage, as: "image" }, "default", "DESC"], // Sắp xếp theo trường 'default', giảm dần (true sẽ được đưa lên đầu)
-      ],
+      order: orderCondition,
     });
     const resultsJson = JSON.stringify(results, null, 2); // Biến JSON thành chuỗi để cho đúng định dạng
     const resultsParse = JSON.parse(resultsJson); // Chuyển chuỗi JSON thành đối tượng JavaScript
@@ -678,6 +689,297 @@ const filterProductService = async (req, res) => {
     console.log("🚀 ~ GetAllProductService ~ error:", error);
   }
 };
+
+// suggestProductsService : kiểu gợi ý các sản phẩm có trong cùng đơn hàng mà hiện ra phải khác id với sản phẩm ban đầu
+const suggestProductsService = async (req, res) => {
+  try {
+    const id_product = req.params.id;
+
+    // Bước 1: Tìm các productDetailsId từ productId
+    const productDetails = await db.ProductDetails.findAll({
+      where: { productId: id_product },
+      attributes: ["id"],
+      raw: true,
+    });
+    const productDetailsIds = productDetails.map((pd) => pd.id); //[ 31, 32, 33, 34, 35, 36 ]
+    console.log(
+      "🚀 ~ suggestProductsService ~ productDetailsIds:",
+      productDetailsIds
+    );
+
+    // Bước 2: Tìm các đơn hàng chứa các productDetailsId này
+    const orderDetails = await db.OrderDetails.findAll({
+      where: { productDetailsId: productDetailsIds },
+      attributes: ["orderId"],
+      raw: true,
+    });
+    console.log("🚀 ~ suggestProductsService ~ orderDetails:", orderDetails);
+    const orderIds = orderDetails.map((orderDetail) => orderDetail.orderId); //[ 4, 5, 2, 8 ]
+
+    // Bước 3: Tìm các productDetailsId khác trong các đơn hàng đó
+    const products = await db.OrderDetails.findAll({
+      where: {
+        orderId: orderIds,
+        productDetailsId: { [Op.notIn]: productDetailsIds },
+      },
+      attributes: ["productDetailsId"],
+      raw: true,
+    });
+    const productIds = products.map((product) => product.productDetailsId);
+    console.log("🚀 ~ suggestProductsService ~ productIds:", productIds);
+
+    // Bước 4: Đếm tần suất xuất hiện của từng sản phẩm và chuyển từ productDetailsId sang productId
+    const prob_array = {};
+    for (const productDetailsId of productIds) {
+      const productDetail = await db.ProductDetails.findOne({
+        where: { id: productDetailsId },
+        attributes: ["productId"],
+        raw: true,
+      });
+      console.log(
+        "🚀 ~ suggestProductsService ~ productDetail:",
+        productDetail
+      );
+
+      if (productDetail) {
+        const productId = productDetail.productId;
+        if (prob_array[productId]) {
+          prob_array[productId] += 1;
+        } else {
+          prob_array[productId] = 1;
+        }
+      }
+    }
+
+    console.log("🚀 ~ suggestProductsService ~ prob_array:", prob_array);
+
+    // Bước 5: Sắp xếp sản phẩm theo tần suất xuất hiện và lấy danh sách gợi ý
+    const sortedProducts = Object.entries(prob_array).sort(
+      (a, b) => b[1] - a[1]
+    ); ////entries để chuyển thành kiểu như   [ [ '2', 4 ], [ '4', 2 ], [ '5', 2 ], [ '1', 1 ], [ '3', 1 ] ]
+
+    let suggestedProductIds = sortedProducts.map((product) => product[0]);
+    suggestedProductIds = suggestedProductIds.slice(0, 4);
+    console.log(
+      "🚀 ~ suggestProductsService ~ suggestedProductIds:",
+      suggestedProductIds
+    );
+
+    // Bước 6: Trường hợp không có gợi ý, lấy sản phẩm cùng danh mục
+    if (suggestedProductIds.length === 0) {
+      const product = await db.Product.findOne({
+        where: { id: id_product },
+        attributes: ["categoryId"],
+        raw: true,
+      });
+
+      const categoryProducts = await db.Product.findAll({
+        where: {
+          categoryId: product.categoryId,
+          id: { [Op.ne]: id_product }, //Op.ne là khác (!=)
+        },
+        attributes: ["id"],
+        limit: 4,
+        raw: true,
+      });
+
+      suggestedProductIds = categoryProducts.map((product) => product.id); // lấy được mảng id của các sản phẩm chung đơn hàng
+    }
+
+    // từ mảng các id map ra thông tin
+
+    const results = await db.Product.findAll({
+      include: [
+        { model: db.ProductDetails },
+        { model: db.ProductImage, as: "image" },
+        { model: db.Rating },
+      ],
+      where: { id: suggestedProductIds },
+      order: [
+        ["createdAt", "DESC"],
+        [{ model: db.ProductImage, as: "image" }, "default", "DESC"], // Sắp xếp theo trường 'default', giảm dần (true sẽ được đưa lên đầu)
+      ],
+    });
+    const resultsJson = JSON.stringify(results, null, 2); // Biến JSON thành chuỗi để cho đúng định dạng
+    const resultsParse = JSON.parse(resultsJson); // Chuyển chuỗi JSON thành đối tượng JavaScript
+
+    // mục đích chuyển đổi trong productDetails từ hiển thị id ra name
+    const parsedResults = await Promise.all(
+      resultsParse.map(async (item) => {
+        const parsedProductDetails = await Promise.all(
+          item.ProductDetails.map(async (detail) => {
+            let parsedProperties = {};
+
+            try {
+              parsedProperties = JSON.parse(detail.properties || "{}"); // từ JSON chuyển đồi sang js
+
+              // Tìm tiêu đề tương ứng từ bảng AttributeValue
+              const size = await db.AttributeValue.findOne({
+                where: { id: parsedProperties.size },
+                raw: true,
+              });
+
+              // Kiểm tra xem có thuộc tính size trong properties không
+              if (size) {
+                parsedProperties.size = size.description;
+              }
+
+              // Kiểm tra xem có thuộc tính color trong properties không
+              if (parsedProperties.color) {
+                // Tìm tiêu đề tương ứng từ bảng AttributeValue
+                const color = await db.AttributeValue.findOne({
+                  where: { id: parsedProperties.color },
+                  raw: true,
+                });
+                if (color) {
+                  parsedProperties.color = color.description;
+                }
+              }
+            } catch (error) {
+              console.error("Error parsing JSON:", error);
+            }
+
+            return {
+              ...detail,
+              properties: parsedProperties,
+            };
+          })
+        );
+
+        return {
+          ...item,
+          ProductDetails: parsedProductDetails,
+        };
+      })
+    );
+
+    // lấy  điểm đánh giá
+    const overview = parsedResults.map((item) => {
+      const sumRate = item?.Ratings?.reduce(
+        (accumulator, currentValue) =>
+          accumulator + parseInt(currentValue.rate),
+        0
+      );
+      const averageRate = Math.round(sumRate / item.Ratings.length);
+
+      return { ...item, pointRate: averageRate ? averageRate : 0 };
+    });
+
+    // Sắp xếp lại kết quả theo thứ tự của suggestedProductIds
+    const results2 = suggestedProductIds.map((id) =>
+      overview.find((product) => product.id.toString() === id)
+    );
+
+    return res.status(OK).json(success(results2));
+
+    // const infoProduct = await db.Product.findAll({
+    //   where: { id: suggestedProductIds },
+    //   raw: true,
+    // });
+    // console.log("🚀 ~ suggestProductsService ~ infoProduct:", infoProduct);
+
+    // // Bước 1: Tìm các đơn hàng chứa sản phẩm đang xét
+    // const orderDetails = await db.OrderDetails.findAll({
+    //   where: { productDetailsId: id_product },
+    //   attributes: ["orderId"],
+    //   raw: true,
+    // }); // lấy được kiểu [ { orderId: 1 },{ orderId: 6 },{ orderId: 4 },{ orderId: 7 },{ orderId: 7 } ]
+
+    // const orderIds = orderDetails.map((orderDetail) => orderDetail.orderId); // lấy ra mảng id [ 1, 6, 4, 7, 7 ]
+    // console.log("🚀 ~ suggestProductsService ~ orderIds:", orderIds);
+
+    // // Bước 2: Tìm các sản phẩm khác (id_product) trong cùng đơn hàng trong các đơn hàng kiểu [ 1, 6, 4, 7, 7 ]
+    // const products = await db.OrderDetails.findAll({
+    //   where: {
+    //     orderId: orderIds,
+    //     productDetailsId: { [Op.ne]: id_product }, //Op.ne là khác (!=)
+    //   },
+    //   attributes: ["productDetailsId"],
+    //   raw: true,
+    // });
+
+    // const productIds = products.map((product) => product.productDetailsId); // [15, 25, 7, 22, 24, 30, 27, 30,  1, 25, 10]
+    // console.log("🚀 ~ suggestProductsService ~ productIds:", productIds);
+
+    // // Bước 3: Đếm tần suất xuất hiện của từng sản phẩm
+    // const prob_array = {};
+    // productIds.forEach((productId) => {
+    //   if (prob_array[productId]) {
+    //     prob_array[productId] += 1;
+    //   } else {
+    //     prob_array[productId] = 1;
+    //   }
+    // });
+    // console.log("🚀 ~ suggestProductsService ~ prob_array:", prob_array);
+
+    // // Bước 4: Sắp xếp sản phẩm theo tần suất xuất hiện (giảm dần)
+    // const sortedProducts = Object.entries(prob_array).sort(
+    //   (a, b) => b[1] - a[1]
+    // ); //entries để chuyển thành kiểu như  [ '25', 2 ], [ '30', 2 ],
+    // console.log(
+    //   "🚀 ~ suggestProductsService ~ sortedProducts:",
+    //   sortedProducts
+    // );
+    // let suggestedProductIds = sortedProducts.map((product) => product[0]);
+    // console.log(
+    //   "🚀 ~ suggestProductsService ~ suggestedProductIds:",
+    //   suggestedProductIds
+    // );
+
+    // // Bước 5: Lấy danh sách sản phẩm gợi ý (lấy 3 sản phẩm)
+    // suggestedProductIds = suggestedProductIds.slice(0, 4);
+
+    // // Bước 6: Trường hợp không có gợi ý, lấy sản phẩm cùng danh mục
+    // if (suggestedProductIds.length === 0) {
+    //   const product = await db.Product.findOne({
+    //     where: { id: id_product },
+    //     attributes: ["categoryId"],
+    //     raw: true,
+    //   });
+    //   console.log("🚀 ~ suggestProductsService ~ product:", product);
+
+    //   const categoryProducts = await db.Product.findAll({
+    //     where: {
+    //       categoryId: product.categoryId,
+    //       id: { [Op.ne]: id_product },
+    //     },
+    //     attributes: ["id"],
+    //     limit: 4,
+    //     raw: true,
+    //   });
+
+    //   suggestedProductIds = categoryProducts.map((product) => product.id);
+    // }
+
+    // return res.status(200).json(success(suggestedProductIds));
+  } catch (error) {
+    console.log("🚀 ~ suggestProducts ~ error:", error);
+  }
+};
+
+const productReviewsService = async (req, res) => {
+  try {
+    const token = req.headers.authorization;
+    const idProduct = req.params.id;
+
+    if (token) {
+      const accessToken = token.split(" ")[1];
+      jwt.verify(accessToken, configs.key.private, async (err, user) => {
+        if (err) {
+          return res.status(FORBIDDEN).json(error("Token không hợp lệ"));
+        }
+        console.log("🚀 ~ jwt.verify ~ user:", user);
+
+        const findProduct = await db.Rating.findOne({
+          where: { userId: user.id, order },
+        });
+      });
+      return res.status(OK).json(success("OK Đánh giá"));
+    }
+  } catch (error) {
+    console.log("🚀 ~ productReviews ~ error:", error);
+  }
+};
 export {
   GetAllProductService,
   getDetailsProduct,
@@ -688,4 +990,6 @@ export {
   deleteProductService,
   deleteVariantProductService,
   filterProductService,
+  suggestProductsService,
+  productReviewsService,
 };

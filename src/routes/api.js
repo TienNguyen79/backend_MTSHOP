@@ -38,7 +38,9 @@ import {
   handleFilterProduct,
   handleGeDetailProduct,
   handleGetAllProduct,
+  handleProductReviews,
   handleQuantityvariant,
+  handleSuggestProducts,
   handleUpdateProduct,
   handleUpdateQuantityVariantProduct,
 } from "../controllers/product.Controller";
@@ -107,7 +109,8 @@ const initWebRouter = (app) => {
   router.delete("/product/:id", handleDeleteProduct);
   router.delete("/product/variantProduct/:id", handleDeleteVariantProduct);
   router.get("/productFilter", handleFilterProduct);
-
+  router.get("/suggestProduct/:id", handleSuggestProducts);
+  router.post("/productReviews/:id", verifyToken, handleProductReviews);
   //cart
 
   router.get("/cart", verifyToken, handleGetAllCart);
@@ -116,7 +119,7 @@ const initWebRouter = (app) => {
   router.delete("/cart/:id", verifyToken, handleDeleteCart);
 
   //order
-  router.get("/order", handleGetAllOrder);
+  router.get("/order", verifyToken, handleGetAllOrder);
   router.post("/order", verifyToken, handleOrderProduct); // đặt hàng
   router.put("/order/:id", handleUpdateStatusOrder);
   router.put("/cancelOrder/:id", verifyToken, handleCancelOrder); //hủy bên admin

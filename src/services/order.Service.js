@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import { configs } from "../config/config.jwtkey";
 import {
   BAD_REQUEST,
+  FORBIDDEN,
   NOT_FOUND,
   OK,
   UNAUTHORIZED,
@@ -15,71 +16,147 @@ const getAllOrderService = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const page = parseInt(req.query.page) || 1;
     const offset = (page - 1) * limit;
+    const token = req.headers.authorization;
 
-    const conditionWhere = {};
+    if (token) {
+      const accessToken = token.split(" ")[1];
+      jwt.verify(accessToken, configs.key.private, async (err, user) => {
+        if (err) {
+          return res.status(FORBIDDEN).json(error("Token không hợp lệ"));
+        }
+        if (user.roleID === statusRole.ADMIN) {
+          const conditionWhere = {};
 
-    const statusOrder = req.query.statusOrder;
+          const statusOrder = req.query.statusOrder;
 
-    if (statusOrder) {
-      conditionWhere.orderState = statusOrder;
-    }
-    console.log("🚀 ~ getAllOrderService ~ conditionWhere:", conditionWhere);
+          if (statusOrder) {
+            conditionWhere.orderState = statusOrder;
+          }
 
-    const getAllOrder = await db.Order.findAll({
-      where: conditionWhere,
-      limit: HIGH_LIMIT,
-    });
-    const results = await db.Order.findAll({
-      include: [
-        {
-          model: db.User,
-          // include: [
-          //   {
-          //     model: db.PaymentMethodUser,
-          //     include: [{ model: db.PaymentMethodSystem }],
-          //   },
-          // ],
-        },
-        {
-          model: db.PaymentMethodUser,
-          include: [{ model: db.PaymentMethodSystem }],
-          attributes: {
-            exclude: ["systemId"], //bỏ field này đi
-          },
-        },
-        {
-          model: db.Address,
-          as: "deliveryAddress",
-        },
-        {
-          model: db.OrderDetails,
-          include: [
-            {
-              model: db.ProductDetails,
-              include: [{ model: db.Product }],
-              attributes: {
-                exclude: ["productId"], //bỏ field này đi
+          const getAllOrder = await db.Order.findAll({
+            where: conditionWhere,
+            limit: HIGH_LIMIT,
+          });
+          const results = await db.Order.findAll({
+            include: [
+              {
+                model: db.User,
+                // include: [
+                //   {
+                //     model: db.PaymentMethodUser,
+                //     include: [{ model: db.PaymentMethodSystem }],
+                //   },
+                // ],
               },
+              {
+                model: db.PaymentMethodUser,
+                include: [{ model: db.PaymentMethodSystem }],
+                attributes: {
+                  exclude: ["systemId"], //bỏ field này đi
+                },
+              },
+              {
+                model: db.Address,
+                as: "deliveryAddress",
+              },
+              {
+                model: db.OrderDetails,
+                include: [
+                  {
+                    model: db.ProductDetails,
+                    include: [{ model: db.Product }],
+                    attributes: {
+                      exclude: ["productId"], //bỏ field này đi
+                    },
+                  },
+                ],
+              },
+            ],
+            attributes: {
+              exclude: ["userId", "addressId"], //bỏ field này đi
             },
-          ],
-        },
-      ],
-      attributes: {
-        exclude: ["userId", "addressId"], //bỏ field này đi
-      },
-      order: [["createdAt", "DESC"]],
-      limit: limit,
-      offset: offset,
-      where: conditionWhere,
-    });
-    return res.status(OK).json(
-      success(results, {
-        page: page,
-        limit: limit,
-        totalPages: parseInt(Math.ceil(getAllOrder.length / limit)),
-        totalResults: getAllOrder.length,
-      })
-    );
+            order: [["createdAt", "DESC"]],
+            limit: limit,
+            offset: offset,
+            where: conditionWhere,
+          });
+          return res.status(OK).json(
+            success(results, {
+              page: page,
+              limit: limit,
+              totalPages: parseInt(Math.ceil(getAllOrder.length / limit)),
+              totalResults: getAllOrder.length,
+            })
+          );
+        } else if (user.roleID === statusRole.USER) {
+          const conditionWhere = {
+            userId: user.id,
+          };
+
+          const statusOrder = req.query.statusOrder;
+
+          if (statusOrder) {
+            conditionWhere.orderState = statusOrder;
+          }
+
+          const getAllOrder = await db.Order.findAll({
+            where: conditionWhere,
+            limit: HIGH_LIMIT,
+          });
+          const results = await db.Order.findAll({
+            include: [
+              {
+                model: db.User,
+                // include: [
+                //   {
+                //     model: db.PaymentMethodUser,
+                //     include: [{ model: db.PaymentMethodSystem }],
+                //   },
+                // ],
+              },
+              {
+                model: db.PaymentMethodUser,
+                include: [{ model: db.PaymentMethodSystem }],
+                attributes: {
+                  exclude: ["systemId"], //bỏ field này đi
+                },
+              },
+              {
+                model: db.Address,
+                as: "deliveryAddress",
+              },
+              {
+                model: db.OrderDetails,
+                include: [
+                  {
+                    model: db.ProductDetails,
+                    include: [{ model: db.Product }],
+                    attributes: {
+                      exclude: ["productId"], //bỏ field này đi
+                    },
+                  },
+                ],
+              },
+            ],
+            attributes: {
+              exclude: ["userId", "addressId"], //bỏ field này đi
+            },
+            order: [["createdAt", "DESC"]],
+            limit: limit,
+            offset: offset,
+            where: conditionWhere,
+          });
+          return res.status(OK).json(
+            success(results, {
+              page: page,
+              limit: limit,
+              totalPages: parseInt(Math.ceil(getAllOrder.length / limit)),
+              totalResults: getAllOrder.length,
+            })
+          );
+        }
+      });
+    }
   } catch (error) {
     console.log("🚀 ~ getAllOrderService ~ error:", error);
   }
