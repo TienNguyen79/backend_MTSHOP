@@ -162,6 +162,103 @@ const getAllOrderService = async (req, res) => {
   }
 };
 
+const getDetailsOrderService = async (req, res) => {
+  try {
+    const token = req.headers.authorization;
+    const orderId = parseInt(req.params.id);
+    if (token) {
+      const accessToken = token.split(" ")[1];
+      jwt.verify(accessToken, configs.key.private, async (err, user) => {
+        if (err) {
+          return res.status(FORBIDDEN).json(error("Token không hợp lệ"));
+        }
+        if (user.roleID === statusRole.ADMIN) {
+          const results = await db.Order.findOne({
+            include: [
+              {
+                model: db.User,
+              },
+              {
+                model: db.PaymentMethodUser,
+                include: [{ model: db.PaymentMethodSystem }],
+                attributes: {
+                  exclude: ["systemId"], //bỏ field này đi
+                },
+              },
+              {
+                model: db.Address,
+                as: "deliveryAddress",
+              },
+              {
+                model: db.OrderDetails,
+                include: [
+                  {
+                    model: db.ProductDetails,
+                    include: [{ model: db.Product }],
+                    attributes: {
+                      exclude: ["productId"], //bỏ field này đi
+                    },
+                  },
+                ],
+              },
+            ],
+            attributes: {
+              exclude: ["userId", "addressId"], //bỏ field này đi
+            },
+            order: [["createdAt", "DESC"]],
+            where: { id: orderId },
+          });
+          return res.status(OK).json(success(results));
+        } else if (user.roleID === statusRole.USER) {
+          const conditionWhere = {
+            userId: user.id,
+            id: orderId,
+          };
+
+          const results = await db.Order.findOne({
+            include: [
+              {
+                model: db.User,
+              },
+              {
+                model: db.PaymentMethodUser,
+                include: [{ model: db.PaymentMethodSystem }],
+                attributes: {
+                  exclude: ["systemId"], //bỏ field này đi
+                },
+              },
+              {
+                model: db.Address,
+                as: "deliveryAddress",
+              },
+              {
+                model: db.OrderDetails,
+                include: [
+                  {
+                    model: db.ProductDetails,
+                    include: [{ model: db.Product }],
+                    attributes: {
+                      exclude: ["productId"], //bỏ field này đi
+                    },
+                  },
+                ],
+              },
+            ],
+            attributes: {
+              exclude: ["userId", "addressId"], //bỏ field này đi
+            },
+            order: [["createdAt", "DESC"]],
+
+            where: conditionWhere,
+          });
+          return res.status(OK).json(success(results));
+        }
+      });
+    }
+  } catch (error) {
+    console.log("🚀 ~ getDetailsOrderService ~ error:", error);
+  }
+};
 const orderProductService = async (req, res) => {
   try {
     const validationResult = orderValidate.validate(req.body);
@@ -447,6 +544,7 @@ const DeleteOrderService = async (req, res) => {
 
 export {
   getAllOrderService,
+  getDetailsOrderService,
   orderProductService,
   updateStatusOrderService,
   CancelOrderService,

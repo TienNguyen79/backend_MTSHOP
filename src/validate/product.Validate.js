@@ -99,3 +99,19 @@ export const updateQuantityVariantValidate = Joi.object({
     "number.min": "quantity phải lớn hơn 0.",
   }),
 });
+
+export const reviewProductValidate = Joi.object({
+  idProduct: Joi.number().integer().required().messages({
+    "any.required": "idProduct là trường bắt buộc.",
+    "number.base": "idProduct phải là số.",
+    "number.integer": "idProduct phải là số nguyên.",
+  }),
+  description: Joi.string().required().messages({
+    "any.required": "description là trường bắt buộc.",
+    "string.empty": "description không được để trống.",
+  }),
+  rate: Joi.string().required().messages({
+    "any.required": "rate là trường bắt buộc.",
+    "string.empty": "rate không được để trống.",
+  }),
+});

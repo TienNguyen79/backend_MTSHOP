@@ -4,6 +4,7 @@ import {
   CancelOrderService,
   DeleteOrderService,
   getAllOrderService,
+  getDetailsOrderService,
   orderProductService,
   updateStatusOrderService,
 } from "../services/order.Service";
@@ -11,6 +12,16 @@ import {
 const handleGetAllOrder = async (req, res) => {
   try {
     let data = await getAllOrderService(req, res);
+
+    return data;
+  } catch (error1) {
+    return res.status(INTERNAL_SERVER_ERROR).json(error(error1));
+  }
+};
+
+const handleGetDetailsOrder = async (req, res) => {
+  try {
+    let data = await getDetailsOrderService(req, res);
 
     return data;
   } catch (error1) {
@@ -60,6 +71,7 @@ const handleDeleteOrder = async (req, res) => {
 
 export {
   handleGetAllOrder,
+  handleGetDetailsOrder,
   handleOrderProduct,
   handleUpdateStatusOrder,
   handleCancelOrder,

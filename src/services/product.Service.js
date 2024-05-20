@@ -2,11 +2,12 @@ import jwt from "jsonwebtoken";
 import { Op } from "sequelize";
 import { parsePricetoVn } from "../commom/funtion";
 import { HIGH_LIMIT } from "../constant/constant.commom";
-import { BAD_REQUEST, NOT_FOUND, OK } from "../constant/http.status";
+import { BAD_REQUEST, FORBIDDEN, NOT_FOUND, OK } from "../constant/http.status";
 import db from "../models";
 import { error, success } from "../results/handle.results";
 import {
   productValidate,
+  reviewProductValidate,
   updateQuantityVariantValidate,
   updateproductValidate,
 } from "../validate/product.Validate";
@@ -743,6 +744,7 @@ const suggestProductsService = async (req, res) => {
 
       if (productDetail) {
         const productId = productDetail.productId;
+
         if (prob_array[productId]) {
           prob_array[productId] += 1;
         } else {
@@ -960,7 +962,22 @@ const suggestProductsService = async (req, res) => {
 const productReviewsService = async (req, res) => {
   try {
     const token = req.headers.authorization;
-    const idProduct = req.params.id;
+    const idOrder = req.params.idOrder;
+    const idProduct = req.body.idProduct;
+    const description = req.body.description;
+    const rate = req.body.rate;
+
+    const validationResult = reviewProductValidate.validate({
+      idProduct: idProduct,
+      description: description,
+      rate: rate,
+    });
+
+    if (validationResult.error) {
+      return res
+        .status(BAD_REQUEST)
+        .json(error(validationResult.error.details[0].message));
+    }
 
     if (token) {
       const accessToken = token.split(" ")[1];
@@ -968,13 +985,45 @@ const productReviewsService = async (req, res) => {
         if (err) {
           return res.status(FORBIDDEN).json(error("Token không hợp lệ"));
         }
-        console.log("🚀 ~ jwt.verify ~ user:", user);
 
-        const findProduct = await db.Rating.findOne({
-          where: { userId: user.id, order },
+        const findOrder = await db.Order.findOne({
+          where: { userId: user.id, id: idOrder, orderState: "5" },
         });
+
+        if (!findOrder) {
+          return res
+            .status(FORBIDDEN)
+            .json(error("Đơn hàng không thể đánhh giá"));
+        } else {
+          const isValidRating = await db.Rating.findOne({
+            where: {
+              userId: user.id,
+              productId: idProduct,
+              orderId: idOrder,
+            },
+          });
+
+          if (isValidRating) {
+            return res
+              .status(FORBIDDEN)
+              .json(error("Bạn đã đánh giá sản phẩm của đơn hàng này rồi!"));
+          }
+
+          const addReview = await db.Rating.create({
+            userId: user.id,
+            productId: idProduct,
+            orderId: idOrder,
+            description: description,
+            rate: rate,
+          });
+
+          if (addReview) {
+            return res.status(OK).json(success(addReview));
+          } else {
+            return res.status(OK).json(error("Thất bại!"));
+          }
+        }
       });
-      return res.status(OK).json(success("OK Đánh giá"));
     }
   } catch (error) {
     console.log("🚀 ~ productReviews ~ error:", error);
