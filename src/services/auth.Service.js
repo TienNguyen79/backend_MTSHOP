@@ -230,7 +230,7 @@ const sendMailService = async (req, res) => {
           `    <p>Xin Chào,</p>
                <p>Bạn đã yêu cầu thay đổi mật khẩu cho tài khoản của mình.</p>
                <p>Vui lòng nhấn vào liên kết dưới đây để xác nhận thay đổi:</p>
-               <p><a  href="${process.env.APP_URL}/verify?email=${email}&token=${hashedEmail}"> Xác Nhận </a></p>
+               <p><a  href="${process.env.APP_URL}/resetpass?email=${email}&token=${hashedEmail}"> Xác Nhận </a></p>
                <p>Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email này.</p>
                <p>Trân trọng,</p>
                <p>Đội ngũ quản trị viên MTSHOP</p>`

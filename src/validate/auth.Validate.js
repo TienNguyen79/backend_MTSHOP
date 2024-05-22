@@ -7,7 +7,7 @@ export const registerSchema = Joi.object({
     .email()
     .message("email không hợp lệ hoặc bị thiếu.")
     .required(),
-  password: Joi.string().min(6).max(10).required().messages({
+  password: Joi.string().min(6).max(30).required().messages({
     "string.base": "password phải là một chuỗi.",
     "string.empty": "password không được để trống.",
     "string.min": "password phải có ít nhất {#limit} ký tự.",
@@ -34,7 +34,7 @@ export const loginSchema = Joi.object({
     .email()
     .message("email không hợp lệ hoặc bị thiếu.")
     .required(),
-  password: Joi.string().min(6).max(10).required().messages({
+  password: Joi.string().min(6).max(30).required().messages({
     "string.base": "password phải là một chuỗi.",
     "string.empty": "password không được để trống.",
     "string.min": "password phải có ít nhất {#limit} ký tự.",
