@@ -3,6 +3,7 @@ import {
   BAD_REQUEST,
   FORBIDDEN,
   INTERNAL_SERVER_ERROR,
+  NOT_FOUND,
   OK,
   UNAUTHORIZED,
 } from "../constant/http.status";
@@ -211,17 +212,21 @@ const sendMailService = async (req, res) => {
 
     const { email } = req.body;
 
-    // const response = await db.User.findOne({ where: { email: email } });
+    const isEmail = await db.User.findOne({ where: { email: email } });
+
+    if (!isEmail) {
+      return res.status(NOT_FOUND).json(error("Email không tồn tại!"));
+    }
 
     bcrypt
       .hash(email, parseInt(process.env.BCRYPT_SALT_ROUND))
       .then((hashedEmail) => {
-        res.cookie("tokenForgotPass", hashedEmail, {
-          httpOnly: true,
-          secure: false,
-          sameSite: "",
-          maxAge: 30000, //30s
-        });
+        // res.cookie("tokenForgotPass", hashedEmail, {
+        //   httpOnly: true,
+        //   secure: false,
+        //   sameSite: "",
+        //   maxAge: 30000, //30s
+        // });
 
         sendMail(
           email,
@@ -252,7 +257,7 @@ const forgotPassService = async (req, res) => {
   const tokenForgotPass = req.cookies.tokenForgotPass; //đã lưu khi gửi mail giờ lấy ra
 
   if (!tokenForgotPass)
-    return res.status(UNAUTHORIZED).json("Token đã hết hạn!");
+    return res.status(UNAUTHORIZED).json(error("Token đã hết hạn!"));
   const { email, password } = req.body;
   try {
     const response = await db.User.findOne({
