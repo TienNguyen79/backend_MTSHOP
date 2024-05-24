@@ -192,7 +192,7 @@ const getCurrentUser = async (req, res) => {
     const accessToken = token.split(" ")[1];
     jwt.verify(accessToken, configs.key.private, async (err, user) => {
       if (err) {
-        return res.status(FORBIDDEN).json(error("Token không hợp lệ"));
+        return res.status(UNAUTHORIZED).json(error("Token không hợp lệ"));
       }
 
       const getUser = await db.User.findOne({ where: { id: user.id } });

@@ -11,7 +11,7 @@ const verifyToken = (req, res, next) => {
     const accessToken = token.split(" ")[1];
     jwt.verify(accessToken, configs.key.private, (err, user) => {
       if (err) {
-        return res.status(FORBIDDEN).json(error("Token không hợp lệ"));
+        return res.status(UNAUTHORIZED).json(error("Token không hợp lệ"));
       }
       if (user.status === statusUser.BAN) {
         return res
