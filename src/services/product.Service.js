@@ -633,6 +633,9 @@ const filterProductService = async (req, res) => {
 
     const includeCondition = [
       {
+        model: db.Category,
+      },
+      {
         model: db.ProductDetails,
         where:
           sizes.length > 0
@@ -669,6 +672,10 @@ const filterProductService = async (req, res) => {
     const results = await db.Product.findAll({
       include: includeCondition,
       where: whereCondition,
+
+      attributes: {
+        exclude: ["categoryId"], //bỏ field này đi
+      },
 
       limit: limit, // Áp dụng giới hạn
       offset: offset, // Lấy data từ offset trở đi
