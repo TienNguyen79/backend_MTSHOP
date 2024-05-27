@@ -23,7 +23,7 @@ module.exports = {
 
     const ProductImages = [];
 
-    for (let t = 0; t < 8; t++) {
+    for (let t = 0; t < 50; t++) {
       for (let i = 0; i < 6; i++) {
         ProductImages.push({
           default: i === 0 ? true : false,

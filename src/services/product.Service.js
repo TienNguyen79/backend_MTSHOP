@@ -605,9 +605,35 @@ const filterProductService = async (req, res) => {
       whereCondition.name = { [db.Sequelize.Op.like]: `%${name}%` };
     }
 
-    //filter category
+    // //filter category
+    // if (category) {
+    //   whereCondition.categoryId = parseInt(category);
+    // }
+
+    // Lấy sản phẩm của danh mục cha và các danh mục con liên quan
+    let categoryIds = [];
     if (category) {
-      whereCondition.categoryId = parseInt(category);
+      const parentCategory = await db.Category.findOne({
+        where: { id: category, parentId: null },
+        include: {
+          model: db.Category,
+          as: "children",
+          attributes: ["id"],
+        },
+        attributes: ["id"],
+      });
+
+      if (parentCategory) {
+        categoryIds = [
+          parentCategory.id,
+          ...parentCategory.children.map((child) => child.id),
+        ];
+      } else {
+        categoryIds = [category]; // nếu chỉ là danh mục con
+      }
+      // console.log("🚀 ~ filterProductService ~ categoryIds:", categoryIds);
+
+      whereCondition.categoryId = { [db.Sequelize.Op.in]: categoryIds };
     }
 
     //filter averageRating

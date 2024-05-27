@@ -19,14 +19,14 @@ module.exports = {
         type: Sequelize.TEXT,
       },
       price: {
-        type: Sequelize.DECIMAL(12, 3),
+        type: Sequelize.INTEGER,
       },
       discount: {
         type: Sequelize.INTEGER,
       },
 
       total: {
-        type: Sequelize.DECIMAL(12, 3),
+        type: Sequelize.INTEGER,
       },
 
       sold: {

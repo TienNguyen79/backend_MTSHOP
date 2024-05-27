@@ -74,13 +74,13 @@ const initWebRouter = (app) => {
   router.get("/hihi", handleTest);
 
   //auth
-  router.post("/register", handleRegister);
-  router.post("/login", handleLogin);
-  router.post("/refreshToken", handleRefreshToken);
-  router.post("/logout", verifyToken, handleLogout);
-  router.post("/sendMail", handleSendMail);
-  router.post("/forgotPass", handleForgotPass);
-  router.get("/currentUser", verifyToken, handleGetCurrentUser);
+  router.post("/register", handleRegister); //ok
+  router.post("/login", handleLogin); //ok
+  router.post("/refreshToken", handleRefreshToken); // cần xem xét
+  router.post("/logout", verifyToken, handleLogout); // ok
+  router.post("/sendMail", handleSendMail); //ok
+  router.post("/forgotPass", handleForgotPass); //ok
+  router.get("/currentUser", verifyToken, handleGetCurrentUser); //ok
 
   //category
 

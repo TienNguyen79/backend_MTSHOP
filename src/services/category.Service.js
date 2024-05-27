@@ -82,8 +82,26 @@ const GetAllcategoryService = async (req, res) => {
       };
     });
 
+    //mục đích lấy được số lượng của cả category cha lẫn con
+
+    const overView = mergedResults.map((cateItem) => {
+      const quantity =
+        cateItem.children.length > 0
+          ? cateItem.children.reduce(
+              (accumulator, currentValue) =>
+                accumulator + currentValue.productCount,
+              0
+            )
+          : 0;
+
+      return {
+        ...cateItem,
+        TotalproductCount: quantity + cateItem.productCount,
+      };
+    });
+
     return res.status(OK).json(
-      success(mergedResults, {
+      success(overView, {
         page: page,
         limit: limit,
         totalPages: parseInt(Math.ceil(getFullCate.length / limit)),

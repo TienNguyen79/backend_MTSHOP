@@ -9,16 +9,16 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      // // Mối quan hệ nhiều-1 với chính nó (mỗi danh mục có thể có một danh mục cha)
-      // Category.belongsTo(models.Category, {
-      //   foreignKey: "parentId",
-      //   as: "parent",
-      // });
-      // // Mối quan hệ 1-n với chính nó (một danh mục cha có thể có nhiều danh mục con)
-      // Category.hasMany(models.Category, {
-      //   foreignKey: "parentId",
-      //   as: "children",
-      // });
+      // // Mối quan hệ nhiều-1 với chính nó (mỗi danh mục chỉ có một danh mục cha)
+      Category.belongsTo(models.Category, {
+        foreignKey: "parentId",
+        as: "parent",
+      });
+      // Mối quan hệ 1-n với chính nó (một danh mục cha có thể có nhiều danh mục con)
+      Category.hasMany(models.Category, {
+        foreignKey: "parentId",
+        as: "children",
+      });
 
       Category.hasMany(models.News, {
         foreignKey: "categoryId",
