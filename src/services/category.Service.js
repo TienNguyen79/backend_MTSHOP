@@ -42,11 +42,44 @@ const GetAllcategoryService = async (req, res) => {
       nest: true,
     });
 
+    // const mergedResults = results1.map((result) => {
+    //   // Tìm các children tương ứng từ results2
+    //   const children = results2.filter((item) => item.parentId === result.id);
+    //   // Thêm children vào mỗi mục gốc
+    //   return { ...result, children };
+    // });
+
+    // đoạn này làm hiển thị tổng số lượng sản phẩm của mỗi category
+    const productCounts = await db.Product.findAll({
+      attributes: [
+        "categoryId",
+        [db.Sequelize.fn("COUNT", db.Sequelize.col("id")), "productCount"],
+      ],
+      group: ["categoryId"],
+      raw: true,
+    });
+    // console.log("🚀 ~ GetAllcategoryService ~ productCounts:", productCounts);
+
+    const productCountMap = productCounts.reduce((map, item) => {
+      map[item.categoryId] = item.productCount;
+      return map;
+    }, {});
+    // console.log("🚀 ~ productCountMap ~ productCountMap:", productCountMap);
+
     const mergedResults = results1.map((result) => {
       // Tìm các children tương ứng từ results2
-      const children = results2.filter((item) => item.parentId === result.id);
-      // Thêm children vào mỗi mục gốc
-      return { ...result, children };
+      const children = results2
+        .filter((item) => item.parentId === result.id)
+        .map((child) => ({
+          ...child,
+          productCount: productCountMap[child.id] || 0,
+        }));
+      // Thêm children và số lượng sản phẩm vào mỗi mục gốc
+      return {
+        ...result,
+        children,
+        productCount: productCountMap[result.id] || 0,
+      };
     });
 
     return res.status(OK).json(
