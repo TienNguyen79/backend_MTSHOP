@@ -107,7 +107,7 @@ const initWebRouter = (app) => {
 
   router.get("/product", handleGetAllProduct); // có thể lấy các sản phẩm của category tương ứng
   router.get("/product/:id", handleGeDetailProduct);
-  router.get("/product/getQuantity/:id", handleQuantityvariant);
+  router.post("/product/getQuantity/:id", handleQuantityvariant);
   router.post("/product", verifyTokenAdminAuth, handleAddProduct);
   router.put("/product/:id", verifyTokenAdminAuth, handleUpdateProduct);
   router.put(
