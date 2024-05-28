@@ -78,9 +78,17 @@ const getAllCartService = async (req, res) => {
                   };
                 }
               }
+              console.log("🚀 ~ parseResults.map ~ dataProduct:", dataProduct);
             } catch (error) {
               console.error("Error parsing JSON:", error);
             }
+
+            const dataProduct = await db.Product.findOne({
+              where: { id: detail.productDetails.productId },
+              include: [{ model: db.ProductImage, as: "image" }],
+              raw: true,
+              nest: true,
+            });
 
             return {
               ...detail,
@@ -88,6 +96,7 @@ const getAllCartService = async (req, res) => {
                 id: detail.productDetails.id,
                 properties: parsedProperties,
               },
+              product: dataProduct,
             };
           })
         );
@@ -125,6 +134,17 @@ const addtoCartService = async (req, res) => {
       jwt.verify(accessToken, configs.key.private, async (err, user) => {
         if (err) {
           return res.status(FORBIDDEN).json(error("Token không hợp lệ"));
+        }
+
+        const getProductDetail = await db.ProductDetails.findOne({
+          where: { id: productDetailsId },
+          raw: true,
+        });
+
+        if (quantity > getProductDetail.quantity) {
+          return res
+            .status(BAD_REQUEST)
+            .json(error("Số lượng trong kho không đủ"));
         }
 
         const checkValidProduct = await db.Cart.findOne({
