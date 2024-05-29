@@ -202,6 +202,17 @@ const updateQuantityProductInCartService = async (req, res) => {
           return res.status(FORBIDDEN).json(error("Token không hợp lệ"));
         }
 
+        const getProductDetail = await db.ProductDetails.findOne({
+          where: { id: productDetailsId },
+          raw: true,
+        });
+
+        if (quantity > getProductDetail.quantity) {
+          return res
+            .status(BAD_REQUEST)
+            .json(error("Số lượng trong kho không đủ"));
+        }
+
         let results;
 
         const checkValidProduct = await db.Cart.findOne({

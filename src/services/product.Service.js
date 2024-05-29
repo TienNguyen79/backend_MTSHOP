@@ -72,15 +72,16 @@ const GetAllProductService = async (req, res) => {
             try {
               parsedProperties = JSON.parse(detail.properties || "{}"); // từ JSON chuyển đồi sang js
 
-              // Tìm tiêu đề tương ứng từ bảng AttributeValue
-              const size = await db.AttributeValue.findOne({
-                where: { id: parsedProperties.size },
-                raw: true,
-              });
-
-              // Kiểm tra xem có thuộc tính size trong properties không
-              if (size) {
-                parsedProperties.size = size.description;
+              if (parsedProperties.size) {
+                // Tìm tiêu đề tương ứng từ bảng AttributeValue
+                const size = await db.AttributeValue.findOne({
+                  where: { id: parsedProperties.size },
+                  raw: true,
+                });
+                // Kiểm tra xem có thuộc tính size trong properties không
+                if (size) {
+                  parsedProperties.size = size.description;
+                }
               }
 
               // Kiểm tra xem có thuộc tính color trong properties không
@@ -167,19 +168,21 @@ const getDetailsProduct = async (req, res) => {
           try {
             parsedProperties = JSON.parse(detail.properties || "{}"); // từ JSON chuyển đồi sang js
 
-            // Tìm tiêu đề tương ứng từ bảng AttributeValue
-            const size = await db.AttributeValue.findOne({
-              where: { id: parsedProperties.size },
-              raw: true,
-            });
+            if (parsedProperties.size) {
+              // Tìm tiêu đề tương ứng từ bảng AttributeValue
+              const size = await db.AttributeValue.findOne({
+                where: { id: parsedProperties.size },
+                raw: true,
+              });
 
-            //custom  lại thay vì trả ra mỗi id thì ra cả tên tương ứng với mỗi id
-            // Kiểm tra xem có thuộc tính size trong properties không
-            if (size) {
-              parsedProperties.size = {
-                id: parsedProperties.size,
-                description: size.description,
-              };
+              //custom  lại thay vì trả ra mỗi id thì ra cả tên tương ứng với mỗi id
+              // Kiểm tra xem có thuộc tính size trong properties không
+              if (size) {
+                parsedProperties.size = {
+                  id: parsedProperties.size,
+                  description: size.description,
+                };
+              }
             }
 
             // Kiểm tra xem có thuộc tính color trong properties không
@@ -215,16 +218,20 @@ const getDetailsProduct = async (req, res) => {
       parsedProductDetails.forEach((item) => {
         const { size, color } = item.properties;
 
-        // Thêm size vào mảng uniqueSizes nếu chưa tồn tại
-        const existingSize = uniqueSizes.find((s) => s.id === size.id);
-        if (!existingSize) {
-          uniqueSizes.push(size);
+        if (size) {
+          // Thêm size vào mảng uniqueSizes nếu chưa tồn tại
+          const existingSize = uniqueSizes.find((s) => s.id === size.id);
+          if (!existingSize) {
+            uniqueSizes.push(size);
+          }
         }
 
-        // Thêm color vào mảng uniqueColors nếu chưa tồn tại
-        const existingColor = uniqueColors.find((c) => c.id === color.id);
-        if (!existingColor) {
-          uniqueColors.push(color);
+        if (color) {
+          // Thêm color vào mảng uniqueColors nếu chưa tồn tại
+          const existingColor = uniqueColors.find((c) => c.id === color.id);
+          if (!existingColor) {
+            uniqueColors.push(color);
+          }
         }
       });
 
@@ -244,7 +251,7 @@ const getDetailsProduct = async (req, res) => {
       return res.status(NOT_FOUND).json(success("Sản phẩm không tồn tại"));
     }
   } catch (error) {
-    console.log("🚀 ~ GetAllProductService ~ error:", error);
+    console.log("🚀 ~ getDetailsProduct ~ error:", error);
   }
 };
 // get quantityvariant
@@ -286,6 +293,7 @@ const addProductService = async (req, res) => {
     const quantity = parseInt(req.body.quantity);
 
     const { name, description, properties, image } = req.body;
+    console.log("🚀 ~ addProductService ~ properties:", properties);
 
     const result1 = await db.Product.create({
       name: name,
