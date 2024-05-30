@@ -26,6 +26,10 @@ const GetAllProductService = async (req, res) => {
     if (name) {
       whereCondition.name = { [db.Sequelize.Op.like]: `%${name}%` };
     }
+
+    if (name === "") {
+      whereCondition.name = { [db.Sequelize.Op.like]: null };
+    }
     if (category) {
       whereCondition.categoryId = parseInt(category);
     }
@@ -214,6 +218,7 @@ const getDetailsProduct = async (req, res) => {
 
       const uniqueSizes = [];
       const uniqueColors = [];
+      const sizeColorMap = {};
 
       parsedProductDetails.forEach((item) => {
         const { size, color } = item.properties;
@@ -233,11 +238,38 @@ const getDetailsProduct = async (req, res) => {
             uniqueColors.push(color);
           }
         }
+
+        if (size && color) {
+          if (!sizeColorMap[size.id]) {
+            sizeColorMap[size.id] = new Set();
+          }
+          sizeColorMap[size.id].add(color.id);
+        }
       });
 
+      const availableSizes = uniqueSizes.map((size) => ({
+        ...size,
+        availableColors: uniqueColors.map((color) => ({
+          ...color,
+          available: sizeColorMap[size.id]
+            ? sizeColorMap[size.id].has(color.id)
+            : false,
+        })),
+      }));
+
+      const availableColors = uniqueColors.map((color) => ({
+        ...color,
+        availableSizes: uniqueSizes.map((size) => ({
+          ...size,
+          available: sizeColorMap[size.id]
+            ? sizeColorMap[size.id].has(color.id)
+            : false,
+        })),
+      }));
+
       const result2 = {
-        ArrUniqueSize: uniqueSizes,
-        ArrUniqueColor: uniqueColors,
+        ArrUniqueSize: availableSizes,
+        ArrUniqueColor: availableColors,
       };
 
       const data = {
@@ -736,7 +768,7 @@ const filterProductService = async (req, res) => {
 const suggestProductsService = async (req, res) => {
   try {
     const id_product = req.params.id;
-
+    let isSuggestedProductIdsNone = false;
     // Bước 1: Tìm các productDetailsId từ productId
     const productDetails = await db.ProductDetails.findAll({
       where: { productId: id_product },
@@ -803,13 +835,10 @@ const suggestProductsService = async (req, res) => {
 
     let suggestedProductIds = sortedProducts.map((product) => product[0]);
     suggestedProductIds = suggestedProductIds.slice(0, 4);
-    console.log(
-      "🚀 ~ suggestProductsService ~ suggestedProductIds:",
-      suggestedProductIds
-    );
 
     // Bước 6: Trường hợp không có gợi ý, lấy sản phẩm cùng danh mục
     if (suggestedProductIds.length === 0) {
+      isSuggestedProductIdsNone = true;
       const product = await db.Product.findOne({
         where: { id: id_product },
         attributes: ["categoryId"],
@@ -829,6 +858,11 @@ const suggestProductsService = async (req, res) => {
       suggestedProductIds = categoryProducts.map((product) => product.id); // lấy được mảng id của các sản phẩm chung đơn hàng
     }
 
+    console.log(
+      "🚀 ~ suggestProductsService ~ suggestedProductIds:",
+      suggestedProductIds
+    );
+
     // từ mảng các id map ra thông tin
 
     const results = await db.Product.findAll({
@@ -837,12 +871,13 @@ const suggestProductsService = async (req, res) => {
         { model: db.ProductImage, as: "image" },
         { model: db.Rating },
       ],
-      where: { id: suggestedProductIds },
+      where: { id: { [Op.in]: suggestedProductIds } },
       order: [
         ["createdAt", "DESC"],
         [{ model: db.ProductImage, as: "image" }, "default", "DESC"], // Sắp xếp theo trường 'default', giảm dần (true sẽ được đưa lên đầu)
       ],
     });
+
     const resultsJson = JSON.stringify(results, null, 2); // Biến JSON thành chuỗi để cho đúng định dạng
     const resultsParse = JSON.parse(resultsJson); // Chuyển chuỗi JSON thành đối tượng JavaScript
 
@@ -909,11 +944,16 @@ const suggestProductsService = async (req, res) => {
     });
 
     // Sắp xếp lại kết quả theo thứ tự của suggestedProductIds
-    const results2 = suggestedProductIds.map((id) =>
-      overview.find((product) => product.id.toString() === id)
-    );
+    const results2 = suggestedProductIds.map((id) => {
+      return overview.find((product) => product.id.toString() === id);
+    });
 
-    return res.status(OK).json(success(results2));
+    // Trường hợp không tìm thấy sản phẩm nào phù hợp
+    const finalResults = results2.filter((product) => product !== undefined);
+
+    return res
+      .status(OK)
+      .json(success(isSuggestedProductIdsNone ? overview : finalResults));
 
     // const infoProduct = await db.Product.findAll({
     //   where: { id: suggestedProductIds },
