@@ -245,6 +245,10 @@ const getDetailsProduct = async (req, res) => {
           }
           sizeColorMap[size.id].add(color.id);
         }
+        console.log(
+          "🚀 ~ parsedProductDetails.forEach ~ sizeColorMap:",
+          sizeColorMap
+        );
       });
 
       const availableSizes = uniqueSizes.map((size) => ({
@@ -340,14 +344,49 @@ const addProductService = async (req, res) => {
 
     //nếu tạo sản phẩm thành công
     if (result1) {
-      for (const idSize of properties.arrSize) {
-        for (const idColor of properties.arrColor) {
+      const ID_PRODUCT = result1.id;
+
+      if (properties.arrSize.length > 0 && properties.arrColor.length > 0) {
+        console.log("FULL");
+
+        for (const idSize of properties.arrSize) {
+          for (const idColor of properties.arrColor) {
+            const results2 = await db.ProductDetails.create({
+              productId: ID_PRODUCT,
+              quantity: quantity || 10,
+              properties: { size: idSize, color: idColor },
+            });
+          }
+        }
+      } else if (properties.arrSize.length > 0) {
+        console.log("SIZE");
+
+        for (const idSize of properties.arrSize) {
+          console.log("🚀 ~ addProductService ~ idSize:", idSize);
           const results2 = await db.ProductDetails.create({
-            productId: result1.id,
+            productId: ID_PRODUCT,
             quantity: quantity || 10,
-            properties: { size: idSize, color: idColor },
+            properties: { size: idSize },
           });
         }
+      } else if (properties.arrColor.length > 0) {
+        console.log("COLOR");
+
+        for (const idColor of properties.arrColor) {
+          const results2 = await db.ProductDetails.create({
+            productId: ID_PRODUCT,
+            quantity: quantity || 10,
+            properties: { color: idColor },
+          });
+        }
+      } else {
+        console.log("NO");
+
+        const results2 = await db.ProductDetails.create({
+          productId: ID_PRODUCT,
+          quantity: quantity || 10,
+          properties: {},
+        });
       }
 
       // thêm ảnh, link ảnh đầu tiên trong mảng là ảnh chính
@@ -386,18 +425,20 @@ const addProductService = async (req, res) => {
             try {
               parsedProperties = JSON.parse(detail.properties || "{}"); // từ JSON chuyển đồi sang js
 
-              // Tìm tiêu đề tương ứng từ bảng AttributeValue
-              const size = await db.AttributeValue.findOne({
-                where: { id: parsedProperties.size },
-                raw: true,
-              });
+              if (parsedProperties.size) {
+                // Tìm tiêu đề tương ứng từ bảng AttributeValue
+                const size = await db.AttributeValue.findOne({
+                  where: { id: parsedProperties.size },
+                  raw: true,
+                });
 
-              // Kiểm tra xem có thuộc tính size trong properties không
-              if (size) {
-                parsedProperties.size = {
-                  id: parsedProperties.size,
-                  description: size.description,
-                };
+                // Kiểm tra xem có thuộc tính size trong properties không
+                if (size) {
+                  parsedProperties.size = {
+                    id: parsedProperties.size,
+                    description: size.description,
+                  };
+                }
               }
 
               // Kiểm tra xem có thuộc tính color trong properties không
@@ -425,36 +466,9 @@ const addProductService = async (req, res) => {
           })
         );
 
-        //lấy ra mảng size và color duy nhất phục vụ cho FE làm nhanh là chính :))
-
-        const uniqueSizes = [];
-        const uniqueColors = [];
-
-        parsedProductDetails.forEach((item) => {
-          const { size, color } = item.properties;
-
-          // Thêm size vào mảng uniqueSizes nếu chưa tồn tại
-          const existingSize = uniqueSizes.find((s) => s.id === size.id);
-          if (!existingSize) {
-            uniqueSizes.push(size);
-          }
-
-          // Thêm color vào mảng uniqueColors nếu chưa tồn tại
-          const existingColor = uniqueColors.find((c) => c.id === color.id);
-          if (!existingColor) {
-            uniqueColors.push(color);
-          }
-        });
-
-        const result2 = {
-          ArrUniqueSize: uniqueSizes,
-          ArrUniqueColor: uniqueColors,
-        };
-
         const data = {
           ...resultsParse,
           ProductDetails: parsedProductDetails,
-          productVariantUnique: result2,
         };
 
         return res.status(OK).json(success(data));

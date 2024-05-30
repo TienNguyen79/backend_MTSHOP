@@ -23,14 +23,23 @@ module.exports = {
 
     const ProductDetails = [];
 
-    for (let t = 0; t < 8; t++) {
+    for (let t = 0; t < 50; t++) {
       for (let i = 0; i < 6; i++) {
         ProductDetails.push({
           productId: t + 1,
-          properties: JSON.stringify({
-            size: Math.floor(Math.random() * 6) + 1, // random từ 1 -> 6
-            color: Math.floor(Math.random() * 5) + 7, // random từ 7 -> 11
-          }),
+
+          properties:
+            t < 20
+              ? JSON.stringify({
+                  size: Math.floor(Math.random() * 6) + 1, // random từ 1 -> 6
+                  color: Math.floor(Math.random() * 5) + 7, // random từ 7 -> 11
+                })
+              : t > 20 && t <= 35
+              ? JSON.stringify({
+                  size: Math.floor(Math.random() * 6) + 1, // random từ 1 -> 6
+                })
+              : JSON.stringify({}),
+
           quantity: Math.floor(Math.random() * 300) + 1,
           createdAt: new Date(),
           updatedAt: new Date(),
