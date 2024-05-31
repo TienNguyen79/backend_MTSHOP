@@ -179,25 +179,35 @@ const refreshTokenService = async (req, res) => {
   });
 };
 
-const LogoutService = async (res) => {
+const LogoutService = async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+    return res.status(400).json({ ms: "Không có refresh token!" });
+  }
   res.clearCookie("refreshToken");
-  return res.status(OK).json({ ms: "Đăng xuất thành công!" });
+
+  return res.status(200).json({ ms: "Đăng xuất thành công!" });
 };
 
 //get currentUser
 const getCurrentUser = async (req, res) => {
-  const token = req.headers.authorization;
+  try {
+    const token = req.headers.authorization;
 
-  if (token) {
-    const accessToken = token.split(" ")[1];
-    jwt.verify(accessToken, configs.key.private, async (err, user) => {
-      if (err) {
-        return res.status(UNAUTHORIZED).json(error("Token không hợp lệ"));
-      }
+    if (token) {
+      const accessToken = token.split(" ")[1];
+      jwt.verify(accessToken, configs.key.private, async (err, user) => {
+        if (err) {
+          return res.status(UNAUTHORIZED).json(error("Token không hợp lệ"));
+        }
 
-      const getUser = await db.User.findOne({ where: { id: user.id } });
-      return res.status(OK).json(success(getUser));
-    });
+        const getUser = await db.User.findOne({ where: { id: user.id } });
+        return res.status(OK).json(success(getUser));
+      });
+    }
+  } catch (error) {
+    console.log("🚀 ~ getCurrentUser ~ error:", error);
   }
 };
 

@@ -10,6 +10,7 @@ const verifyToken = (req, res, next) => {
   if (token) {
     const accessToken = token.split(" ")[1];
     jwt.verify(accessToken, configs.key.private, (err, user) => {
+      console.log("🚀 ~ jwt.verify ~ err:", err);
       if (err) {
         return res.status(UNAUTHORIZED).json(error("Token không hợp lệ"));
       }

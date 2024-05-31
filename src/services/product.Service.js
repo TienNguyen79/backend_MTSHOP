@@ -905,15 +905,17 @@ const suggestProductsService = async (req, res) => {
             try {
               parsedProperties = JSON.parse(detail.properties || "{}"); // từ JSON chuyển đồi sang js
 
-              // Tìm tiêu đề tương ứng từ bảng AttributeValue
-              const size = await db.AttributeValue.findOne({
-                where: { id: parsedProperties.size },
-                raw: true,
-              });
+              if (parsedProperties.size) {
+                // Tìm tiêu đề tương ứng từ bảng AttributeValue
+                const size = await db.AttributeValue.findOne({
+                  where: { id: parsedProperties.size },
+                  raw: true,
+                });
 
-              // Kiểm tra xem có thuộc tính size trong properties không
-              if (size) {
-                parsedProperties.size = size.description;
+                // Kiểm tra xem có thuộc tính size trong properties không
+                if (size) {
+                  parsedProperties.size = size.description;
+                }
               }
 
               // Kiểm tra xem có thuộc tính color trong properties không

@@ -42,7 +42,7 @@ const handleRefreshToken = async (req, res) => {
 
 const handleLogout = async (req, res) => {
   try {
-    let data = await LogoutService(res);
+    let data = await LogoutService(req, res);
 
     return data;
   } catch (error) {
