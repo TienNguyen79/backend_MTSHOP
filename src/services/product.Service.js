@@ -20,10 +20,11 @@ const GetAllProductService = async (req, res) => {
     const name = req.query.name;
     const category = parseInt(req.query.category);
     const topSold = req.query.topSold;
+    const topDisCount = parseInt(req.query.topDisCount);
     const offset = (page - 1) * limit;
 
     const whereCondition = {};
-    if (name) {
+    if (name && name !== "undefined") {
       whereCondition.name = { [db.Sequelize.Op.like]: `%${name}%` };
     }
 
@@ -32,6 +33,10 @@ const GetAllProductService = async (req, res) => {
     }
     if (category) {
       whereCondition.categoryId = parseInt(category);
+    }
+
+    if (topDisCount) {
+      whereCondition.discount = { [db.Sequelize.Op.gte]: topDisCount };
     }
 
     const getFullProduct = await db.Product.findAll({
