@@ -202,7 +202,10 @@ const getCurrentUser = async (req, res) => {
           return res.status(UNAUTHORIZED).json(error("Token không hợp lệ"));
         }
 
-        const getUser = await db.User.findOne({ where: { id: user.id } });
+        const getUser = await db.User.findOne({
+          where: { id: user.id },
+          include: [{ model: db.Address }],
+        });
         return res.status(OK).json(success(getUser));
       });
     }
