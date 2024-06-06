@@ -217,8 +217,8 @@ const addNewsComment = async (req, res) => {
 
     const { content, newsId, userId } = req.body;
 
-    const isNewsId = await db.Category.findByPk(newsId, { raw: true });
-    const isUserId = await db.Category.findByPk(userId, { raw: true });
+    const isNewsId = await db.News.findByPk(newsId, { raw: true });
+    const isUserId = await db.User.findByPk(userId, { raw: true });
 
     if (isNewsId && isUserId) {
       const results = await db.NewsComment.create({
