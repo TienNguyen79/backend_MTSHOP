@@ -53,3 +53,10 @@ export const addUserValidateSchema = Joi.object({
     "any.required": "userName không được để trống.",
   }),
 });
+
+export const AddressValidateSchema = Joi.object({
+  address: Joi.string().required().messages({
+    "any.required": "address là trường bắt buộc.",
+    "string.empty": "address không được để trống.",
+  }),
+});

@@ -371,32 +371,73 @@ const orderProductService = async (req, res) => {
 const updateStatusOrderService = async (req, res) => {
   try {
     const orderId = req.params.id;
+    const token = req.headers.authorization;
 
-    const order = await db.Order.findOne({ where: { id: orderId } });
-    if (!order) {
-      return res.status(NOT_FOUND).json(error("Order không tồn tại"));
-    }
-
-    const currentState = parseInt(order.orderState, 10);
-
-    if (currentState < 5) {
-      const updateStausOrder = await db.Order.update(
-        {
-          orderState: (currentState + 1).toString(),
-        },
-        {
-          where: { id: orderId },
+    if (token) {
+      const accessToken = token.split(" ")[1];
+      jwt.verify(accessToken, configs.key.private, async (err, user) => {
+        if (err) {
+          return res.status(FORBIDDEN).json(error("Token không hợp lệ"));
         }
-      );
-      // Tăng trạng thái lên một đơn vị
 
-      if (updateStausOrder) {
-        const order = await db.Order.findOne({ where: { id: orderId } });
-        return res.status(OK).json(success(order));
-      }
-    } else {
-      // Nếu trạng thái là 5, không thay đổi gì
-      return res.status(OK).json(success("Trạng thái đã hoàn tất"));
+        if (user.roleID === statusRole.ADMIN) {
+          const order = await db.Order.findOne({ where: { id: orderId } });
+          if (!order) {
+            return res.status(NOT_FOUND).json(error("Order không tồn tại"));
+          }
+
+          const currentState = parseInt(order.orderState, 10);
+
+          if (currentState < 5) {
+            const updateStausOrder = await db.Order.update(
+              {
+                orderState: (currentState + 1).toString(),
+              },
+              {
+                where: { id: orderId },
+              }
+            );
+            // Tăng trạng thái lên một đơn vị
+
+            if (updateStausOrder) {
+              const order = await db.Order.findOne({ where: { id: orderId } });
+              return res.status(OK).json(success(order));
+            }
+          } else {
+            // Nếu trạng thái là 5, không thay đổi gì
+            return res.status(OK).json(success("Trạng thái đã hoàn tất"));
+          }
+        } else if (user.roleID === statusRole.USER) {
+          const order = await db.Order.findOne({ where: { id: orderId } });
+          if (!order) {
+            return res.status(NOT_FOUND).json(error("Order không tồn tại"));
+          }
+
+          const currentState = parseInt(order.orderState, 10);
+
+          if (currentState === 4) {
+            const updateStausOrder = await db.Order.update(
+              {
+                orderState: (currentState + 1).toString(),
+              },
+              {
+                where: { id: orderId },
+              }
+            );
+            // Tăng trạng thái lên một đơn vị
+
+            if (updateStausOrder) {
+              const order = await db.Order.findOne({ where: { id: orderId } });
+              return res.status(OK).json(success(order));
+            }
+          } else if (currentState === 5) {
+            // Nếu trạng thái là 5, không thay đổi gì
+            return res.status(OK).json(success("Trạng thái đã hoàn tất"));
+          } else {
+            return res.status(UNAUTHORIZED).json(error("Bạn Không có quyền !"));
+          }
+        }
+      });
     }
   } catch (error) {
     console.log("🚀 ~ updateStatusOrderService ~ error:", error);

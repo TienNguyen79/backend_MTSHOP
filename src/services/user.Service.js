@@ -9,6 +9,7 @@ import db from "../models";
 import { error, success } from "../results/handle.results";
 import bcrypt from "bcrypt";
 import {
+  AddressValidateSchema,
   addUserValidateSchema,
   userValidateSchema,
 } from "../validate/user.Validate";
@@ -222,10 +223,46 @@ const deleteUserService = async (req, res) => {
   }
 };
 
+const addAddressService = async (req, res) => {
+  try {
+    const token = req.headers.authorization;
+    const address = req.body.address;
+
+    const validationResult = AddressValidateSchema.validate({
+      address,
+    });
+    if (validationResult.error) {
+      return res
+        .status(BAD_REQUEST)
+        .json(error(validationResult.error.details[0].message));
+    }
+
+    if (token) {
+      const accessToken = token.split(" ")[1];
+      jwt.verify(accessToken, configs.key.private, async (err, user) => {
+        if (err) {
+          return res.status(FORBIDDEN).json(error("Token không hợp lệ"));
+        }
+        if (address) {
+          const addAddress = await db.Address.create({
+            address: address,
+            userId: user.id,
+          });
+          return res.status(OK).json(success(addAddress));
+        } else {
+          return res.status(BAD_REQUEST).json(error("Lỗi"));
+        }
+      });
+    }
+  } catch (error) {
+    console.log("🚀 ~ addAddress ~ error:", error);
+  }
+};
 export {
   getAllUserService,
   updateInfoUserService,
   addUserService,
   switchStatusBanorUnBanService,
   deleteUserService,
+  addAddressService,
 };

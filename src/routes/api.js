@@ -59,6 +59,7 @@ import {
   handleUpdateStatusOrder,
 } from "../controllers/order.Controller";
 import {
+  handleAddAddressUser,
   handleAddUser,
   handleBanorUnBan,
   handleGetAllUser,
@@ -135,7 +136,7 @@ const initWebRouter = (app) => {
   router.get("/order", verifyToken, handleGetAllOrder);
   router.get("/order/:id", verifyToken, handleGetDetailsOrder);
   router.post("/order", verifyToken, handleOrderProduct); // đặt hàng
-  router.put("/order/:id", verifyTokenAdminAuth, handleUpdateStatusOrder);
+  router.put("/order/:id", verifyToken, handleUpdateStatusOrder);
   router.put("/cancelOrder/:id", verifyToken, handleCancelOrder); //hủy bên admin
   router.delete("/order/:id", verifyTokenAdminAuth, handleDeleteOrder); //hủy bên admin
 
@@ -143,6 +144,7 @@ const initWebRouter = (app) => {
   router.get("/user", verifyTokenAdminAuth, handleGetAllUser);
   router.patch("/user", verifyToken, handleUpdateInfoUser);
   router.post("/user", verifyTokenAdminAuth, handleAddUser);
+  router.post("/address", verifyToken, handleAddAddressUser);
   router.delete("/user/:id", verifyTokenAdminAuth, handledeleteUser);
   router.put("/ban-or-unBan-User/:id", verifyTokenAdminAuth, handleBanorUnBan);
 
