@@ -173,6 +173,7 @@ const getDetailsOrderService = async (req, res) => {
           return res.status(FORBIDDEN).json(error("Token không hợp lệ"));
         }
         if (user.roleID === statusRole.ADMIN) {
+          // ADMIN
           const results = await db.Order.findOne({
             include: [
               {
@@ -208,8 +209,69 @@ const getDetailsOrderService = async (req, res) => {
             order: [["createdAt", "DESC"]],
             where: { id: orderId },
           });
-          return res.status(OK).json(success(results));
+
+          const resultsJson = JSON.stringify(results, null, 2); // Biến JSON thành chuỗi
+          const resultsParse = JSON.parse(resultsJson); // Chuyển chuỗi JSON thành đối tượng JavaScript
+
+          const parsedProductDetails = await Promise.all(
+            resultsParse?.OrderDetails?.map(async (detail) => {
+              let parsedProperties = {};
+
+              try {
+                parsedProperties = JSON.parse(
+                  detail.ProductDetail.properties || "{}"
+                ); // từ JSON chuyển đồi sang js
+
+                if (parsedProperties.size) {
+                  // Tìm tiêu đề tương ứng từ bảng AttributeValue
+                  const size = await db.AttributeValue.findOne({
+                    where: { id: parsedProperties.size },
+                    raw: true,
+                  });
+
+                  //custom  lại thay vì trả ra mỗi id thì ra cả tên tương ứng với mỗi id
+                  // Kiểm tra xem có thuộc tính size trong properties không
+                  if (size) {
+                    parsedProperties.size = {
+                      id: parsedProperties.size,
+                      description: size.description,
+                    };
+                  }
+                }
+
+                // Kiểm tra xem có thuộc tính color trong properties không
+                if (parsedProperties.color) {
+                  // Tìm tiêu đề tương ứng từ bảng AttributeValue
+                  const color = await db.AttributeValue.findOne({
+                    where: { id: parsedProperties.color },
+                    raw: true,
+                  });
+                  if (color) {
+                    parsedProperties.color = {
+                      id: parsedProperties.color,
+                      description: color.description,
+                    };
+                  }
+                }
+              } catch (error) {
+                console.error("Error parsing JSON:", error);
+              }
+
+              return {
+                ...detail,
+                properties: parsedProperties,
+              };
+            })
+          );
+
+          const overview = {
+            ...resultsParse,
+            OrderDetails: parsedProductDetails,
+          };
+
+          return res.status(OK).json(success(overview));
         } else if (user.roleID === statusRole.USER) {
+          // USER
           const conditionWhere = {
             userId: user.id,
             id: orderId,
@@ -236,7 +298,12 @@ const getDetailsOrderService = async (req, res) => {
                 include: [
                   {
                     model: db.ProductDetails,
-                    include: [{ model: db.Product }],
+                    include: [
+                      {
+                        model: db.Product,
+                        include: [{ model: db.ProductImage, as: "image" }],
+                      },
+                    ],
                     attributes: {
                       exclude: ["productId"], //bỏ field này đi
                     },
@@ -251,7 +318,68 @@ const getDetailsOrderService = async (req, res) => {
 
             where: conditionWhere,
           });
-          return res.status(OK).json(success(results));
+
+          const resultsJson = JSON.stringify(results, null, 2); // Biến JSON thành chuỗi
+          const resultsParse = JSON.parse(resultsJson); // Chuyển chuỗi JSON thành đối tượng JavaScript
+
+          // chuyển size, color từ id về text
+          const parsedProductDetails = await Promise.all(
+            resultsParse?.OrderDetails?.map(async (detail) => {
+              let parsedProperties = {};
+
+              try {
+                parsedProperties = JSON.parse(
+                  detail.ProductDetail.properties || "{}"
+                ); // từ JSON chuyển đồi sang js
+
+                if (parsedProperties.size) {
+                  // Tìm tiêu đề tương ứng từ bảng AttributeValue
+                  const size = await db.AttributeValue.findOne({
+                    where: { id: parsedProperties.size },
+                    raw: true,
+                  });
+
+                  //custom  lại thay vì trả ra mỗi id thì ra cả tên tương ứng với mỗi id
+                  // Kiểm tra xem có thuộc tính size trong properties không
+                  if (size) {
+                    parsedProperties.size = {
+                      id: parsedProperties.size,
+                      description: size.description,
+                    };
+                  }
+                }
+
+                // Kiểm tra xem có thuộc tính color trong properties không
+                if (parsedProperties.color) {
+                  // Tìm tiêu đề tương ứng từ bảng AttributeValue
+                  const color = await db.AttributeValue.findOne({
+                    where: { id: parsedProperties.color },
+                    raw: true,
+                  });
+                  if (color) {
+                    parsedProperties.color = {
+                      id: parsedProperties.color,
+                      description: color.description,
+                    };
+                  }
+                }
+              } catch (error) {
+                console.error("Error parsing JSON:", error);
+              }
+
+              return {
+                ...detail,
+                properties: parsedProperties,
+              };
+            })
+          );
+
+          const overview = {
+            ...resultsParse,
+            OrderDetails: parsedProductDetails,
+          };
+
+          return res.status(OK).json(success(overview));
         }
       });
     }
@@ -259,6 +387,7 @@ const getDetailsOrderService = async (req, res) => {
     console.log("🚀 ~ getDetailsOrderService ~ error:", error);
   }
 };
+
 const orderProductService = async (req, res) => {
   try {
     const validationResult = orderValidate.validate(req.body);
