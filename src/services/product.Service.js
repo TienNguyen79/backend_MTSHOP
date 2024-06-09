@@ -312,7 +312,56 @@ const getQuantityvariantService = async (req, res) => {
     const results = await db.ProductDetails.findOne({
       where: { properties: whereCondition, productId: productid },
     });
-    return res.status(OK).json(success(results));
+
+    const resultsJson = JSON.stringify(results, null, 2); // Biến JSON thành chuỗi
+    const resultsParse = JSON.parse(resultsJson); // Chuyển chuỗi JSON thành đối tượng JavaScript
+
+    let parsedProperties = {};
+
+    try {
+      parsedProperties = JSON.parse(resultsParse.properties || "{}"); // từ JSON chuyển đồi sang js
+
+      if (parsedProperties.size) {
+        // Tìm tiêu đề tương ứng từ bảng AttributeValue
+        const size = await db.AttributeValue.findOne({
+          where: { id: parsedProperties.size },
+          raw: true,
+        });
+
+        //custom  lại thay vì trả ra mỗi id thì ra cả tên tương ứng với mỗi id
+        // Kiểm tra xem có thuộc tính size trong properties không
+        if (size) {
+          parsedProperties.size = {
+            id: parsedProperties.size,
+            description: size.description,
+          };
+        }
+      }
+
+      // Kiểm tra xem có thuộc tính color trong properties không
+      if (parsedProperties.color) {
+        // Tìm tiêu đề tương ứng từ bảng AttributeValue
+        const color = await db.AttributeValue.findOne({
+          where: { id: parsedProperties.color },
+          raw: true,
+        });
+        if (color) {
+          parsedProperties.color = {
+            id: parsedProperties.color,
+            description: color.description,
+          };
+        }
+      }
+    } catch (error) {
+      console.error("Error parsing JSON:", error);
+    }
+
+    const overview = {
+      ...resultsParse,
+      properties: parsedProperties,
+    };
+
+    return res.status(OK).json(success(overview));
   } catch (error) {
     console.log("🚀 ~ getQuantityvariant ~ error:", error);
   }
