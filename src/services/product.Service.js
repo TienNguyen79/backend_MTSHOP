@@ -858,6 +858,18 @@ const suggestProductsService = async (req, res) => {
     console.log("🚀 ~ suggestProductsService ~ orderDetails:", orderDetails);
     const orderIds = orderDetails.map((orderDetail) => orderDetail.orderId); //[ 4, 5, 2, 8 ]
 
+    // const findProStateSuccess = await db.Order.findAll({
+    //   where: { id: orderIds, orderState: "5" },
+    //   raw: true,
+    // });
+
+    // const orderIdsSuccess = findProStateSuccess.map((pro) => pro.id); //[ 4, 5, 2, 8 ]
+
+    // console.log(
+    //   "🚀 ~ suggestProductsService ~ findProStateSuccess:",
+    //   orderIdsSuccess
+    // );
+
     // Bước 3: Tìm các productDetailsId khác trong các đơn hàng đó
     const products = await db.OrderDetails.findAll({
       where: {
