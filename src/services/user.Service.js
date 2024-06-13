@@ -118,12 +118,14 @@ const updateInfoUserService = async (req, res) => {
     const userName = req.body.userName;
     const email = req.body.email;
     const password = req.body.password;
+    const currentPassword = req.body.currentPassword;
     const phoneNumber = req.body.phoneNumber;
     const avatar = req.body.avatar;
     const token = req.headers.authorization;
 
     const salt = await bcrypt.genSalt(10);
 
+    //check nếu không có pass mới validate
     const validationResult = userValidateSchema.validate({
       userName: userName,
       email: email,
@@ -141,7 +143,14 @@ const updateInfoUserService = async (req, res) => {
         if (err) {
           return res.status(FORBIDDEN).json(error("Token không hợp lệ"));
         }
-        console.log("🚀 ~ jwt.verify ~ user:", user);
+
+        const userInfo = await db.User.findOne({
+          where: { id: user.id },
+          raw: true,
+        });
+        if (!userInfo) {
+          return res.status(NOT_FOUND).json(error("Người dùng không tồn tại"));
+        }
 
         const whereUpdate = {
           userName: userName,
@@ -150,7 +159,17 @@ const updateInfoUserService = async (req, res) => {
           avatar: avatar || "",
         };
 
-        if (password) {
+        if (currentPassword && password) {
+          const isCheckPassOld = await bcrypt.compare(
+            currentPassword,
+            userInfo.password
+          );
+
+          if (!isCheckPassOld)
+            return res
+              .status(BAD_REQUEST)
+              .json(error("Mật khẩu hiện tại không đúng !"));
+
           whereUpdate.password = await bcrypt.hash(password, salt);
         }
 

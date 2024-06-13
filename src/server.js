@@ -18,7 +18,7 @@ app.use(
       "http://localhost:3001",
       "http://localhost:3002",
     ],
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     credentials: true, // cho phép nhận cookie bên phía client
   })
 );

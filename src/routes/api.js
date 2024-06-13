@@ -142,7 +142,7 @@ const initWebRouter = (app) => {
 
   //user
   router.get("/user", verifyTokenAdminAuth, handleGetAllUser);
-  router.patch("/user", verifyToken, handleUpdateInfoUser);
+  router.put("/user", verifyToken, handleUpdateInfoUser);
   router.post("/user", verifyTokenAdminAuth, handleAddUser);
   router.post("/address", verifyToken, handleAddAddressUser);
   router.delete("/user/:id", verifyTokenAdminAuth, handledeleteUser);
