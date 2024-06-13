@@ -60,3 +60,20 @@ export const AddressValidateSchema = Joi.object({
     "string.empty": "address không được để trống.",
   }),
 });
+
+export const passwordValidateSchema = Joi.object({
+  password: Joi.string().min(6).max(10).required().messages({
+    "string.base": "password phải là một chuỗi.",
+    "string.empty": "password không được để trống.",
+    "string.min": "password phải có ít nhất {#limit} ký tự.",
+    "string.max": "password không được vượt quá {#limit} ký tự.",
+    "any.required": "password không được để trống.",
+  }),
+  currentPassword: Joi.string().min(6).max(10).required().messages({
+    "string.base": "currentPassword phải là một chuỗi.",
+    "string.empty": "currentPassword không được để trống.",
+    "string.min": "currentPassword phải có ít nhất {#limit} ký tự.",
+    "string.max": "currentPassword không được vượt quá {#limit} ký tự.",
+    "any.required": "currentPassword không được để trống.",
+  }),
+});

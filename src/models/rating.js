@@ -16,6 +16,8 @@ module.exports = (sequelize, DataTypes) => {
       Rating.hasMany(models.ImageRating, {
         foreignKey: "rateId",
       });
+
+      Rating.belongsTo(models.User, { foreignKey: "userId", as: "user" });
     }
   }
   Rating.init(

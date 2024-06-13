@@ -160,7 +160,18 @@ const getDetailsProduct = async (req, res) => {
         include: [
           { model: db.ProductDetails },
           { model: db.ProductImage, as: "image" },
-          { model: db.Rating },
+          {
+            model: db.Rating,
+            include: [
+              {
+                model: db.User,
+                as: "user",
+              },
+            ],
+            attributes: {
+              exclude: ["userId"], //bỏ field này đi
+            },
+          },
         ],
 
         order: [

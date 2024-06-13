@@ -11,6 +11,7 @@ import bcrypt from "bcrypt";
 import {
   AddressValidateSchema,
   addUserValidateSchema,
+  passwordValidateSchema,
   userValidateSchema,
 } from "../validate/user.Validate";
 import { configs } from "../config/config.jwtkey";
@@ -126,15 +127,28 @@ const updateInfoUserService = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
 
     //check nếu không có pass mới validate
-    const validationResult = userValidateSchema.validate({
-      userName: userName,
-      email: email,
-      phoneNumber: phoneNumber,
-    });
-    if (validationResult.error) {
-      return res
-        .status(BAD_REQUEST)
-        .json(error(validationResult.error.details[0].message));
+
+    if (!currentPassword && !password) {
+      const validationResult = userValidateSchema.validate({
+        userName: userName,
+        email: email,
+        phoneNumber: phoneNumber,
+      });
+      if (validationResult.error) {
+        return res
+          .status(BAD_REQUEST)
+          .json(error(validationResult.error.details[0].message));
+      }
+    } else {
+      const validationResult = passwordValidateSchema.validate({
+        password: password,
+        currentPassword: currentPassword,
+      });
+      if (validationResult.error) {
+        return res
+          .status(BAD_REQUEST)
+          .json(error(validationResult.error.details[0].message));
+      }
     }
 
     if (token) {
