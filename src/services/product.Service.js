@@ -171,6 +171,8 @@ const getDetailsProduct = async (req, res) => {
             attributes: {
               exclude: ["userId"], //bỏ field này đi
             },
+            separate: true, // Sử dụng `separate` để đảm bảo order sẽ được áp dụng chính xác cho các đánh giá
+            order: [["createdAt", "DESC"]],
           },
         ],
 
@@ -866,31 +868,32 @@ const suggestProductsService = async (req, res) => {
       attributes: ["orderId"],
       raw: true,
     });
-    console.log("🚀 ~ suggestProductsService ~ orderDetails:", orderDetails);
+
     const orderIds = orderDetails.map((orderDetail) => orderDetail.orderId); //[ 4, 5, 2, 8 ]
+    console.log("🚀 ~ suggestProductsService ~ orderIds:", orderIds);
 
-    // const findProStateSuccess = await db.Order.findAll({
-    //   where: { id: orderIds, orderState: "5" },
-    //   raw: true,
-    // });
+    // đơn hàng nhưng phải đã giao thành công
+    const findOrderStateSuccess = await db.Order.findAll({
+      where: { id: orderIds, orderState: "5" },
+      raw: true,
+    });
 
-    // const orderIdsSuccess = findProStateSuccess.map((pro) => pro.id); //[ 4, 5, 2, 8 ]
-
-    // console.log(
-    //   "🚀 ~ suggestProductsService ~ findProStateSuccess:",
-    //   orderIdsSuccess
-    // );
+    const orderIdsSuccess = findOrderStateSuccess.map((order) => order.id);
+    console.log(
+      "🚀 ~ suggestProductsService ~ orderIdsSuccess:",
+      orderIdsSuccess
+    );
 
     // Bước 3: Tìm các productDetailsId khác trong các đơn hàng đó
     const products = await db.OrderDetails.findAll({
       where: {
-        orderId: orderIds,
+        orderId: orderIdsSuccess,
         productDetailsId: { [Op.notIn]: productDetailsIds },
       },
       attributes: ["productDetailsId"],
       raw: true,
     });
-    const productIds = products.map((product) => product.productDetailsId);
+    const productIds = products.map((product) => product.productDetailsId); //đây vẫn là id của product Details
     console.log("🚀 ~ suggestProductsService ~ productIds:", productIds);
 
     // Bước 4: Đếm tần suất xuất hiện của từng sản phẩm và chuyển từ productDetailsId sang productId
@@ -1203,6 +1206,27 @@ const productReviewsService = async (req, res) => {
     console.log("🚀 ~ productReviews ~ error:", error);
   }
 };
+
+const getAllSizeService = async (req, res) => {
+  try {
+    const isSize = await db.Attribute.findOne({
+      where: { name: "size" },
+      raw: true,
+    });
+
+    if (Object.entries(isSize).length > 0) {
+      const getAllSize = await db.AttributeValue.findAll({
+        where: { attributeId: isSize.id },
+        raw: true,
+      });
+      return res.status(OK).json(success(getAllSize));
+    } else {
+      return res.status(OK).json(error("Không tìm thấy size"));
+    }
+  } catch (error) {
+    console.log("🚀 ~ getAllSizeService ~ error:", error);
+  }
+};
 export {
   GetAllProductService,
   getDetailsProduct,
@@ -1215,4 +1239,5 @@ export {
   filterProductService,
   suggestProductsService,
   productReviewsService,
+  getAllSizeService,
 };
