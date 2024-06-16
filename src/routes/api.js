@@ -67,6 +67,11 @@ import {
   handleUpdateInfoUser,
   handledeleteUser,
 } from "../controllers/user.Controller";
+import {
+  handleCancelOrderPayment,
+  handleCreateLinkPayment,
+  handlegetOrderPayment,
+} from "../controllers/payment.Controller";
 
 let router = express.Router();
 let routerAdmin = express.Router();
@@ -150,6 +155,11 @@ const initWebRouter = (app) => {
   router.post("/address", verifyToken, handleAddAddressUser);
   router.delete("/user/:id", verifyTokenAdminAuth, handledeleteUser);
   router.put("/ban-or-unBan-User/:id", verifyTokenAdminAuth, handleBanorUnBan);
+
+  //payment
+  router.post("/payment/createLink", handleCreateLinkPayment);
+  router.get("/payment/:idOrder", handlegetOrderPayment);
+  router.put("/payment/cancel/:idOrder", handleCancelOrderPayment);
 
   return app.use("/api/v1", router);
 };

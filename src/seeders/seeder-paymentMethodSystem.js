@@ -28,7 +28,7 @@ module.exports = {
         updatedAt: new Date(),
       },
       {
-        name: "VN PAY",
+        name: "Thanh Toán Online",
         createdAt: new Date(),
         updatedAt: new Date(),
       },

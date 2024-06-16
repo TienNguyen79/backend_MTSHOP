@@ -23,12 +23,12 @@ module.exports = {
 
     const PaymentMethodUsers = [];
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 30; i++) {
       PaymentMethodUsers.push({
         systemId: Math.floor(Math.random() * 2) + 1,
-        userId: Math.floor(Math.random() * 10) + 1,
-        orderId: Math.floor(Math.random() * 10) + 1,
-        cardNumber: "",
+        userId: Math.floor(Math.random() * 20) + 1,
+        orderId: Math.floor(Math.random() * 60) + 1,
+        paymentStatus: "",
         createdAt: new Date(),
         updatedAt: new Date(),
       });
