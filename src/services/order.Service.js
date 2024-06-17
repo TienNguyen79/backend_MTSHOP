@@ -390,7 +390,11 @@ const getDetailsOrderService = async (req, res) => {
 
 const orderProductService = async (req, res) => {
   try {
-    const validationResult = orderValidate.validate(req.body);
+    const validationResult = orderValidate.validate({
+      productDetails: req.body.productDetails,
+      addressId: req.body.addressId,
+      paymentmethoduserId: req.body.paymentmethoduserId,
+    });
 
     if (validationResult.error) {
       return res
@@ -406,17 +410,29 @@ const orderProductService = async (req, res) => {
       const productDetails = req.body.productDetails;
       const addressId = req.body.addressId;
       const paymentmethoduserId = req.body.paymentmethoduserId;
-
+      const orderState = req.body.orderState || "1";
+      const orderId =
+        req.body.orderId || Number(String(new Date().getTime()).slice(-6));
       jwt.verify(accessToken, configs.key.private, async (err, user) => {
         if (err) {
           return res.status(FORBIDDEN).json(error("Token không hợp lệ"));
         }
 
+        const isCheckOrder = await db.Order.findOne({
+          where: { id: orderId },
+          raw: true,
+        });
+
+        if (Object.entries(isCheckOrder || {}).length > 0) {
+          return res.status(BAD_REQUEST).json(error("Đơn hàng đã tồn tại !"));
+        }
+
         const Create_order = await db.Order.create({
+          id: orderId,
           userId: user.id,
           addressId: addressId,
           shippingfee: 0,
-          orderState: "1",
+          orderState: orderState,
         });
 
         const orderDetailsList = await Promise.all(
