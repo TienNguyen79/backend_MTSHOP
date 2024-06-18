@@ -69,6 +69,7 @@ import {
 } from "../controllers/user.Controller";
 import {
   handleCancelOrderPayment,
+  handleCompletedOrderPaymentService,
   handleCreateLinkPayment,
   handlegetOrderPayment,
 } from "../controllers/payment.Controller";
@@ -160,6 +161,7 @@ const initWebRouter = (app) => {
   router.post("/payment/createLink", handleCreateLinkPayment);
   router.get("/payment/:idOrder", handlegetOrderPayment);
   router.put("/payment/cancel/:idOrder", handleCancelOrderPayment);
+  router.put("/payment/success/:idOrder", handleCompletedOrderPaymentService);
 
   return app.use("/api/v1", router);
 };

@@ -5,6 +5,7 @@ import {
   NOT_FOUND,
   OK,
 } from "../constant/http.status";
+import db from "../models";
 import { error, success } from "../results/handle.results";
 import { paymentValidate } from "../validate/payment.Validate";
 
@@ -90,8 +91,37 @@ const cancelOrderPaymentService = async (req, res) => {
   }
 };
 
+const completedOrderPaymentService = async (req, res) => {
+  try {
+    const { idOrder } = req.params;
+
+    const order = await db.Order.findOne({ where: { id: idOrder } });
+    if (!order) {
+      return res.status(NOT_FOUND).json(error("Đơn Hàng không tồn tại"));
+    }
+
+    const updateStausOrder = await db.Order.update(
+      {
+        orderState: "2",
+      },
+      {
+        where: { id: idOrder },
+      }
+    );
+
+    if (updateStausOrder) {
+      return res.status(OK).json(success("Cập nhật thành công"));
+    } else {
+      return res.status(BAD_REQUEST).json(error("Cập nhật thất bại!"));
+    }
+  } catch (error) {
+    console.log("🚀 ~ getOrderPaymentService ~ error:", error);
+  }
+};
+
 export {
   createLinkPaymentService,
   getOrderPaymentService,
   cancelOrderPaymentService,
+  completedOrderPaymentService,
 };
