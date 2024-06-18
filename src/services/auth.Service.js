@@ -22,8 +22,6 @@ import jwt from "jsonwebtoken";
 import { configs } from "../config/config.jwtkey";
 import sendMail from "../commom/mailer";
 
-let refreshTokensTemp = [];
-
 //register
 const registerService = async (data, res) => {
   try {
@@ -103,7 +101,12 @@ const loginService = async (data, res) => {
         const accessToken = generateAccessToken(payload);
         const refreshToken = generateRefreshToken(id);
 
-        refreshTokensTemp.push(refreshToken); //về sau check token có hợp lệ không
+        // Lưu refresh token vào cơ sở dữ liệu
+        await db.RefreshToken.create({
+          refreshToken: refreshToken,
+          userId: id,
+        });
+
         // lưu vào cookie
         const expiryDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
         res.cookie("refreshToken", refreshToken, {
@@ -137,19 +140,18 @@ const refreshTokenService = async (req, res) => {
   if (!refreshToken)
     return res.status(UNAUTHORIZED).json(error("Chưa xác thực!"));
 
-  if (!refreshTokensTemp.includes(refreshToken)) {
-    //nếu có refresh token nhưng không phải của mình
+  const storedToken = await db.RefreshToken.findOne({
+    where: { refreshToken: refreshToken },
+  });
+  if (!storedToken)
     return res.status(UNAUTHORIZED).json(error("Refresh token không tồn tại!"));
-  }
 
   jwt.verify(refreshToken, configs.key.public, async (err, data) => {
     if (err) {
       return res.status(UNAUTHORIZED).json(error(err));
     }
 
-    refreshTokensTemp = refreshTokensTemp.filter(
-      (token) => token != refreshToken
-    );
+    await db.RefreshToken.destroy({ where: { refreshToken: refreshToken } });
 
     const idUser = data.id;
 
@@ -164,9 +166,13 @@ const refreshTokenService = async (req, res) => {
     const newaccessToken = generateAccessToken(payload);
     const newRefreshToken = generateRefreshToken(id);
 
-    refreshTokensTemp.push(newRefreshToken);
+    // Lưu refresh token vào cơ sở dữ liệu
+    await db.RefreshToken.create({
+      refreshToken: newRefreshToken,
+      userId: id,
+    });
 
-    const expiryDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); //thời gian cookie sống 7d
+    const expiryDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); //thời gian cookie sống 365d
 
     res.cookie("refreshToken", newRefreshToken, {
       httpOnly: true,
@@ -185,6 +191,9 @@ const LogoutService = async (req, res) => {
   if (!refreshToken) {
     return res.status(400).json({ ms: "Không có refresh token!" });
   }
+
+  await db.RefreshToken.destroy({ where: { refreshToken: refreshToken } });
+
   res.clearCookie("refreshToken");
 
   return res.status(200).json({ ms: "Đăng xuất thành công!" });

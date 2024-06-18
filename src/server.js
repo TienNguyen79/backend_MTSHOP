@@ -13,11 +13,7 @@ const port = process.env.PORT || 8888; //port
 //cho phép phía FE gọi api
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:3001",
-      "http://localhost:3002",
-    ],
+    origin: true, // cho phép kết nối từ cùng origin với server
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     credentials: true, // cho phép nhận cookie bên phía client
   })

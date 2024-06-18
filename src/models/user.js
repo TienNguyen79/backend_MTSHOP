@@ -22,6 +22,8 @@ module.exports = (sequelize, DataTypes) => {
       User.hasMany(models.PaymentMethodUser, { foreignKey: "userId" });
 
       User.hasMany(models.Rating, { foreignKey: "userId" });
+
+      User.hasOne(models.RefreshToken, { foreignKey: "userId" });
     }
   }
   User.init(
