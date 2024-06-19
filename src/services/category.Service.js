@@ -115,11 +115,22 @@ const GetAllcategoryService = async (req, res) => {
 
 const addCategoryService = async (req, res) => {
   const { parentId, url, name } = req.body;
+  const validationResult = updateCateValidate.validate({
+    url: url,
+    name: name,
+  });
+
+  if (validationResult.error) {
+    return res
+      .status(BAD_REQUEST)
+      .json(error(validationResult.error.details[0].message));
+  }
   let result = [];
   if (!parentId) {
     result = await db.Category.create({
       url: url,
       name: name,
+      parentId: null,
     });
   } else {
     const rootCategory = await db.Category.findAll({
