@@ -188,7 +188,11 @@ const refreshTokenService = async (req, res) => {
 const LogoutService = async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
 
-  if (!refreshToken) {
+  const isRefreshToken = await db.RefreshToken.findOne({
+    where: { refreshToken: refreshToken },
+  });
+
+  if (!isRefreshToken || !refreshToken) {
     return res.status(400).json({ ms: "Không có refresh token!" });
   }
 
