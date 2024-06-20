@@ -17,6 +17,7 @@ import {
 } from "../middleware/handle.middleware";
 import {
   handleAddCategory,
+  handleGeDetailsCategory,
   handleGetAllCategory,
   handleRestoreCategory,
   handledeleteCategory,
@@ -94,6 +95,7 @@ const initWebRouter = (app) => {
 
   router.get("/categories", handleGetAllCategory);
   router.post("/categories", verifyTokenAdminAuth, handleAddCategory);
+  router.get("/categories/:id", handleGeDetailsCategory);
   router.put("/categories/:id", verifyTokenAdminAuth, handleupdateCategory);
   router.delete("/categories/:id", verifyTokenAdminAuth, handledeleteCategory);
   router.put(

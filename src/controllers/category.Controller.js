@@ -6,12 +6,23 @@ import {
   ReStoreCategoryService,
   addCategoryService,
   deleteCategoryService,
+  getDetailsCategoryService,
   updateCategoryService,
 } from "../services/category.Service";
 
 const handleGetAllCategory = async (req, res) => {
   try {
     let data = await GetAllcategoryService(req, res);
+
+    return data;
+  } catch (error1) {
+    return res.status(INTERNAL_SERVER_ERROR).json(error(error1));
+  }
+};
+
+const handleGeDetailsCategory = async (req, res) => {
+  try {
+    let data = await getDetailsCategoryService(req, res);
 
     return data;
   } catch (error1) {
@@ -61,6 +72,7 @@ const handleRestoreCategory = async (req, res) => {
 
 export {
   handleGetAllCategory,
+  handleGeDetailsCategory,
   handleAddCategory,
   handleupdateCategory,
   handledeleteCategory,

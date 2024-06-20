@@ -1,5 +1,10 @@
 import { Op } from "sequelize";
-import { BAD_REQUEST, NOT_FOUND, OK } from "../constant/http.status";
+import {
+  BAD_REQUEST,
+  NOT_FOUND,
+  OK,
+  UNAUTHORIZED,
+} from "../constant/http.status";
 import db from "../models";
 import { error, success } from "../results/handle.results";
 import { updateCateValidate } from "../validate/category.Validate";
@@ -113,6 +118,23 @@ const GetAllcategoryService = async (req, res) => {
   }
 };
 
+const getDetailsCategoryService = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const results = await db.Category.findOne({
+      where: { id: Number(id) },
+    });
+    if (Object.entries(results || {}).length > 0) {
+      return res.status(OK).json(success(results));
+    } else {
+      return res.status(NOT_FOUND).json(error("Không tìm thấy danh mục !"));
+    }
+  } catch (error) {
+    console.log("🚀 ~ getDetailsCategoryService ~ error:", error);
+  }
+};
+
 const addCategoryService = async (req, res) => {
   const { parentId, url, name } = req.body;
   const validationResult = updateCateValidate.validate({
@@ -163,9 +185,10 @@ const updateCategoryService = async (req, res) => {
   //chưa check: nếu điều kiện  id vs parentId ở mỗi hàng khác nhau thì sẽ cập nhật thất bại
   try {
     const id = parseInt(req.params.id);
-    const parentId = req.query.childrenId
-      ? parseInt(req.query.childrenId)
-      : null;
+    const parentId = req.query.parentId ? parseInt(req.query.parentId) : null;
+
+    const parentIdChange = req.body.parentIdChange;
+
     const { url, name } = req.body;
 
     const validationResult = updateCateValidate.validate({
@@ -183,6 +206,7 @@ const updateCategoryService = async (req, res) => {
       {
         url: url,
         name: name,
+        parentId: parentIdChange || null,
       },
       {
         where: {
@@ -204,6 +228,16 @@ const updateCategoryService = async (req, res) => {
 const deleteCategoryService = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
+
+    const isValidProduct = await db.Product.findAll({
+      where: { categoryId: id },
+    });
+
+    if (isValidProduct.length > 0) {
+      return res
+        .status(UNAUTHORIZED)
+        .json(error("Không thể xóa danh mục đã có sản phẩm"));
+    }
 
     const category = await db.Category.findByPk(id, { raw: true });
 
@@ -282,6 +316,7 @@ const ReStoreCategoryService = async (req, res) => {
 
 export {
   GetAllcategoryService,
+  getDetailsCategoryService,
   addCategoryService,
   updateCategoryService,
   deleteCategoryService,
