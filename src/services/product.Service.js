@@ -8,6 +8,7 @@ import { error, success } from "../results/handle.results";
 import {
   productValidate,
   reviewProductValidate,
+  typeVariantValidate,
   updateQuantityVariantValidate,
   updateproductValidate,
 } from "../validate/product.Validate";
@@ -1207,24 +1208,38 @@ const productReviewsService = async (req, res) => {
   }
 };
 
-const getAllSizeService = async (req, res) => {
+const getAllVariantService = async (req, res) => {
   try {
-    const isSize = await db.Attribute.findOne({
-      where: { name: "size" },
+    const type = req.query.type;
+
+    const validationResult = typeVariantValidate.validate({
+      type: type,
+    });
+
+    if (validationResult.error) {
+      return res
+        .status(BAD_REQUEST)
+        .json(error(validationResult.error.details[0].message));
+    }
+
+    const isType = await db.Attribute.findOne({
+      where: {
+        name: type === "size" ? "size" : type === "color" ? "color" : "",
+      },
       raw: true,
     });
 
-    if (Object.entries(isSize).length > 0) {
-      const getAllSize = await db.AttributeValue.findAll({
-        where: { attributeId: isSize.id },
+    if (Object.entries(isType || {}).length > 0) {
+      const getAllVariant = await db.AttributeValue.findAll({
+        where: { attributeId: isType.id },
         raw: true,
       });
-      return res.status(OK).json(success(getAllSize));
+      return res.status(OK).json(success(getAllVariant));
     } else {
-      return res.status(OK).json(error("Không tìm thấy size"));
+      return res.status(OK).json(error("Không tìm thấy"));
     }
   } catch (error) {
-    console.log("🚀 ~ getAllSizeService ~ error:", error);
+    console.log("🚀 ~ getAllVariantService ~ error:", error);
   }
 };
 export {
@@ -1239,5 +1254,5 @@ export {
   filterProductService,
   suggestProductsService,
   productReviewsService,
-  getAllSizeService,
+  getAllVariantService,
 };

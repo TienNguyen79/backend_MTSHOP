@@ -115,3 +115,10 @@ export const reviewProductValidate = Joi.object({
     "string.empty": "rate không được để trống.",
   }),
 });
+
+export const typeVariantValidate = Joi.object({
+  type: Joi.string().required().messages({
+    "any.required": "type là trường bắt buộc.",
+    "string.empty": "type không được để trống.",
+  }),
+});

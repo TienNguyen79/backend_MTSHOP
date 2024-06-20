@@ -39,7 +39,7 @@ import {
   handleFilterProduct,
   handleGeDetailProduct,
   handleGetAllProduct,
-  handleGetAllSize,
+  handleGetAllVariant,
   handleProductReviews,
   handleQuantityvariant,
   handleSuggestProducts,
@@ -116,7 +116,7 @@ const initWebRouter = (app) => {
   //product
 
   router.get("/product", handleGetAllProduct); // có thể lấy các sản phẩm của category tương ứng
-  router.get("/product/sizes", handleGetAllSize); // muốn định nghĩa như này phải để trên /product/:id
+  router.get("/product/variant", handleGetAllVariant); // muốn định nghĩa như này phải để trên /product/:id
   router.get("/product/:id", handleGeDetailProduct);
   router.post("/product/getQuantity/:id", handleQuantityvariant);
   router.post("/product", verifyTokenAdminAuth, handleAddProduct);
