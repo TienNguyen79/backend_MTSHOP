@@ -6,7 +6,9 @@ import {
   handleForgotPass,
   handleGetCurrentUser,
   handleLogin,
+  handleLoginAdmin,
   handleLogout,
+  handleOverviewInfo,
   handleRefreshToken,
   handleRegister,
   handleSendMail,
@@ -34,6 +36,7 @@ import {
 } from "../controllers/news.Controller";
 import {
   handleAddProduct,
+  handleAddProductDetails,
   handleDeleteProduct,
   handleDeleteVariantProduct,
   handleFilterProduct,
@@ -42,6 +45,7 @@ import {
   handleGetAllVariant,
   handleProductReviews,
   handleQuantityvariant,
+  handleRestoreProduct,
   handleSuggestProducts,
   handleUpdateProduct,
   handleUpdateQuantityVariantProduct,
@@ -85,6 +89,7 @@ const initWebRouter = (app) => {
   //auth
   router.post("/register", handleRegister); //ok
   router.post("/login", handleLogin); //ok
+  router.post("/admin/login", handleLoginAdmin); //ok
   router.post("/refreshToken", handleRefreshToken); // cần xem xét
   router.post("/logout", verifyToken, handleLogout); // ok
   router.post("/sendMail", handleSendMail); //ok
@@ -117,9 +122,15 @@ const initWebRouter = (app) => {
 
   router.get("/product", handleGetAllProduct); // có thể lấy các sản phẩm của category tương ứng
   router.get("/product/variant", handleGetAllVariant); // muốn định nghĩa như này phải để trên /product/:id
+  router.put(
+    "/product/restore/:id",
+    verifyTokenAdminAuth,
+    handleRestoreProduct
+  );
   router.get("/product/:id", handleGeDetailProduct);
   router.post("/product/getQuantity/:id", handleQuantityvariant);
   router.post("/product", verifyTokenAdminAuth, handleAddProduct);
+  router.post("/productDetails", verifyTokenAdminAuth, handleAddProductDetails);
   router.put("/product/:id", verifyTokenAdminAuth, handleUpdateProduct);
   router.put(
     "/product/variantProduct/:id",
@@ -164,6 +175,9 @@ const initWebRouter = (app) => {
   router.get("/payment/:idOrder", handlegetOrderPayment);
   router.put("/payment/cancel/:idOrder", handleCancelOrderPayment);
   router.put("/payment/success/:idOrder", handleCompletedOrderPaymentService);
+
+  //overview
+  router.get("/overview", verifyTokenAdminAuth, handleOverviewInfo);
 
   return app.use("/api/v1", router);
 };

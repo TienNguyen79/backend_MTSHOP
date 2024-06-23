@@ -23,13 +23,13 @@ export const productValidate = Joi.object({
     "number.integer": "price phải là số nguyên.",
   }),
 
-  discount: Joi.number().integer().min(0).max(100).required().messages({
-    "any.required": "discount là trường bắt buộc.",
-    "number.base": "discount phải là số.",
-    "number.integer": "discount phải là số nguyên.",
-    "number.min": "discount phải lớn hơn hoặc bằng 0.",
-    "number.max": "discount phải nhỏ hơn hoặc bằng 100.",
-  }),
+  // discount: Joi.number().integer().min(0).max(100).required().messages({
+  //   "any.required": "discount là trường bắt buộc.",
+  //   "number.base": "discount phải là số.",
+  //   "number.integer": "discount phải là số nguyên.",
+  //   "number.min": "discount phải lớn hơn hoặc bằng 0.",
+  //   "number.max": "discount phải nhỏ hơn hoặc bằng 100.",
+  // }),
   quantity: Joi.number().integer().min(1).required().messages({
     "any.required": "quantity là trường bắt buộc.",
     "number.base": "quantity phải là số.",
@@ -71,19 +71,19 @@ export const updateproductValidate = Joi.object({
     "number.integer": "price phải là số nguyên.",
   }),
 
-  discount: Joi.number().integer().min(0).max(100).required().messages({
-    "any.required": "discount là trường bắt buộc.",
-    "number.base": "discount phải là số.",
-    "number.integer": "discount phải là số nguyên.",
-    "number.min": "discount phải lớn hơn hoặc bằng 0.",
-    "number.max": "discount phải nhỏ hơn hoặc bằng 100.",
-  }),
-  quantity: Joi.number().integer().min(1).required().messages({
-    "any.required": "quantity là trường bắt buộc.",
-    "number.base": "quantity phải là số.",
-    "number.integer": "quantity phải là số nguyên.",
-    "number.min": "quantity phải lớn hơn 0.",
-  }),
+  // discount: Joi.number().integer().min(0).max(100).required().messages({
+  //   "any.required": "discount là trường bắt buộc.",
+  //   "number.base": "discount phải là số.",
+  //   "number.integer": "discount phải là số nguyên.",
+  //   "number.min": "discount phải lớn hơn hoặc bằng 0.",
+  //   "number.max": "discount phải nhỏ hơn hoặc bằng 100.",
+  // }),
+  // quantity: Joi.number().integer().min(1).required().messages({
+  //   "any.required": "quantity là trường bắt buộc.",
+  //   "number.base": "quantity phải là số.",
+  //   "number.integer": "quantity phải là số nguyên.",
+  //   "number.min": "quantity phải lớn hơn 0.",
+  // }),
   image: Joi.array().min(1).required().messages({
     "any.required": "image là trường bắt buộc.",
     "array.min": "image không được để trống.",
@@ -120,5 +120,18 @@ export const typeVariantValidate = Joi.object({
   type: Joi.string().required().messages({
     "any.required": "type là trường bắt buộc.",
     "string.empty": "type không được để trống.",
+  }),
+});
+
+export const AddproductDetailsValidate = Joi.object({
+  idProduct: Joi.number().integer().required().messages({
+    "any.required": "idProduct là trường bắt buộc.",
+    "number.base": "idProduct phải là số.",
+    "number.integer": "idProduct phải là số nguyên.",
+  }),
+  quantity: Joi.number().integer().required().messages({
+    "any.required": "quantity là trường bắt buộc.",
+    "number.base": "quantity phải là số.",
+    "number.integer": "quantity phải là số nguyên.",
   }),
 });

@@ -21,6 +21,7 @@ import {
 import jwt from "jsonwebtoken";
 import { configs } from "../config/config.jwtkey";
 import sendMail from "../commom/mailer";
+import { statusRole, statusUser } from "../constant/constant.commom";
 
 //register
 const registerService = async (data, res) => {
@@ -86,6 +87,12 @@ const loginService = async (data, res) => {
 
       if (!user) {
         return res.status(FORBIDDEN).json(error("Email không tồn tại!"));
+      }
+
+      if (user.status === statusUser.BAN) {
+        return res
+          .status(FORBIDDEN)
+          .json(error("Tài Khoản của bạn đã bị cấm !"));
       }
 
       const validPassword = await bcrypt.compare(data.password, user.password);
@@ -320,6 +327,103 @@ const forgotPassService = async (req, res) => {
   }
 };
 
+//login Admin
+const loginAdminService = async (data, res) => {
+  try {
+    const validationResult = loginSchema.validate(data);
+    if (validationResult.error) {
+      return res
+        .status(BAD_REQUEST)
+        .json(error(validationResult.error.details[0].message));
+    } else {
+      const user = await db.User.findOne({
+        where: { email: data.email, roleID: statusRole.ADMIN },
+        raw: true,
+      });
+
+      if (!user) {
+        return res.status(FORBIDDEN).json(error("Email không tồn tại!"));
+      }
+
+      if (user.status === statusUser.BAN) {
+        return res
+          .status(FORBIDDEN)
+          .json(error("Tài Khoản của bạn đã bị cấm !"));
+      }
+
+      const validPassword = await bcrypt.compare(data.password, user.password);
+
+      if (!validPassword) {
+        return res.status(FORBIDDEN).json(error("password sai !"));
+      }
+
+      if (user && validPassword) {
+        const { email, roleID, id, status } = user;
+        const payload = { email, roleID, id, status };
+
+        const accessToken = generateAccessToken(payload);
+        const refreshToken = generateRefreshToken(id);
+
+        // Lưu refresh token vào cơ sở dữ liệu
+        await db.RefreshToken.create({
+          refreshToken: refreshToken,
+          userId: id,
+        });
+
+        // lưu vào cookie
+        const expiryDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+        res.cookie("refreshToken", refreshToken, {
+          httpOnly: true,
+          secure: false,
+          sameSite: "",
+          expires: expiryDate,
+        });
+        const { password, ...rest } = user; // không muốn password hiện ra
+
+        return res.status(OK).json(
+          success(rest, {
+            token: {
+              accessToken: accessToken,
+              refreshToken: refreshToken,
+            },
+          })
+        );
+      }
+    }
+  } catch (error) {
+    console.log("🚀 ~ loginService ~ error:", error);
+  }
+};
+
+const overviewInfoService = async (req, res) => {
+  try {
+    const findOrderSuccess = await db.Order.findAll({
+      where: { orderState: "5" },
+    });
+    const findOrder = await db.Order.findAll();
+    const findProduct = await db.Product.findAll();
+    const findUser = await db.User.findAll({
+      where: { roleID: statusRole.USER },
+    });
+
+    const sumRevenue = findOrderSuccess.reduce(
+      (accumulator, currentValue) => accumulator + currentValue.total,
+      0
+    );
+
+    const overdata = {
+      revenue: sumRevenue,
+      order: findOrder.length,
+      user: findUser.length,
+      product: findProduct.length,
+    };
+
+    return res.status(OK).json(success(overdata));
+  } catch (error) {
+    console.log("🚀 ~ overviewInfo ~ error:", error);
+  }
+};
+
 export {
   registerService,
   loginService,
@@ -328,4 +432,6 @@ export {
   sendMailService,
   forgotPassService,
   getCurrentUser,
+  loginAdminService,
+  overviewInfoService,
 };

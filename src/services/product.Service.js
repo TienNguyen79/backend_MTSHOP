@@ -6,6 +6,7 @@ import { BAD_REQUEST, FORBIDDEN, NOT_FOUND, OK } from "../constant/http.status";
 import db from "../models";
 import { error, success } from "../results/handle.results";
 import {
+  AddproductDetailsValidate,
   productValidate,
   reviewProductValidate,
   typeVariantValidate,
@@ -45,6 +46,7 @@ const GetAllProductService = async (req, res) => {
       raw: true,
       nest: true,
       limit: HIGH_LIMIT,
+      paranoid: false, // cho phép nhìn thấy cả các sản phẩm đã xóa mềm
     });
 
     const orderCondition = [];
@@ -68,6 +70,7 @@ const GetAllProductService = async (req, res) => {
       limit: limit, // Áp dụng giới hạn
       offset: offset, // Lấy data từ offset trở đi
       order: orderCondition,
+      paranoid: false, // cho phép nhìn thấy cả các sản phẩm đã xóa mềm
     });
     const resultsJson = JSON.stringify(results, null, 2); // Biến JSON thành chuỗi để cho đúng định dạng
     const resultsParse = JSON.parse(resultsJson); // Chuyển chuỗi JSON thành đối tượng JavaScript
@@ -153,7 +156,7 @@ const getDetailsProduct = async (req, res) => {
   try {
     const productId = parseInt(req.params.id);
 
-    const isProduct = await db.Product.findByPk(productId);
+    const isProduct = await db.Product.findByPk(productId, { paranoid: false });
 
     if (isProduct) {
       const results = await db.Product.findOne({
@@ -176,10 +179,10 @@ const getDetailsProduct = async (req, res) => {
             order: [["createdAt", "DESC"]],
           },
         ],
-
         order: [
           [{ model: db.ProductImage, as: "image" }, "default", "DESC"], // Sắp xếp theo trường 'default', giảm dần (true sẽ được đưa lên đầu)
         ],
+        paranoid: false,
       });
       const resultsJson = JSON.stringify(results, null, 2); // Biến JSON thành chuỗi
       const resultsParse = JSON.parse(resultsJson); // Chuyển chuỗi JSON thành đối tượng JavaScript
@@ -383,21 +386,28 @@ const getQuantityvariantService = async (req, res) => {
 //add Product
 const addProductService = async (req, res) => {
   try {
-    const validationResult = productValidate.validate(req.body);
-
-    if (validationResult.error) {
-      return res
-        .status(BAD_REQUEST)
-        .json(error(validationResult.error.details[0].message));
-    }
-
     const categoryId = parseInt(req.body.categoryId);
     const discount = parseInt(req.body.discount);
     const price = parseInt(req.body.price);
     const quantity = parseInt(req.body.quantity);
 
     const { name, description, properties, image } = req.body;
-    console.log("🚀 ~ addProductService ~ properties:", properties);
+
+    const validationResult = productValidate.validate({
+      name: name,
+      categoryId: categoryId,
+      description: description,
+      price: price,
+      quantity: quantity,
+      properties: properties,
+      image: image,
+    });
+
+    if (validationResult.error) {
+      return res
+        .status(BAD_REQUEST)
+        .json(error(validationResult.error.details[0].message));
+    }
 
     const result1 = await db.Product.create({
       name: name,
@@ -551,7 +561,20 @@ const addProductService = async (req, res) => {
 //update Product
 const updateProductService = async (req, res) => {
   try {
-    const validationResult = updateproductValidate.validate(req.body);
+    const categoryId = parseInt(req.body.categoryId);
+    const discount = parseInt(req.body.discount);
+    const price = parseInt(req.body.price);
+
+    const { name, description, image } = req.body;
+    console.log("🚀 ~ updateProductService ~ image:", image);
+
+    const validationResult = updateproductValidate.validate({
+      name: name,
+      categoryId: categoryId,
+      description: description,
+      price: price,
+      image: image,
+    });
 
     if (validationResult.error) {
       return res
@@ -566,12 +589,6 @@ const updateProductService = async (req, res) => {
     if (!isProduct) {
       return res.status(NOT_FOUND).json(error("Product không tồn tại!"));
     }
-
-    const categoryId = parseInt(req.body.categoryId);
-    const discount = parseInt(req.body.discount);
-    const price = parseInt(req.body.price);
-
-    const { name, description, image } = req.body;
 
     const result1 = await db.Product.update(
       {
@@ -591,7 +608,18 @@ const updateProductService = async (req, res) => {
       raw: true,
     });
 
-    if (ArrImg.length > 0) {
+    const ArrImgPri = await db.ProductImage.findAll({
+      where: { productId: idProduct, default: true },
+      raw: true,
+    });
+
+    const ArrImgSub = await db.ProductImage.findAll({
+      where: { productId: idProduct, default: false },
+      raw: true,
+    });
+    console.log("🚀 ~ updateProductService ~ ArrImgSub:", ArrImgSub);
+
+    if (ArrImgPri.length > 0 && ArrImgSub.length > 0) {
       const updatePromises = ArrImg.map((img, i) => {
         return db.ProductImage.update(
           {
@@ -604,10 +632,12 @@ const updateProductService = async (req, res) => {
       });
 
       await Promise.all(updatePromises);
-    } else {
+    } else if (ArrImgPri.length > 0 && ArrImgSub.length <= 0) {
+      image.shift();
+
       const addPromises = image.map((imgUrl, i) => {
         return db.ProductImage.create({
-          default: i === 0 ? true : false,
+          default: false,
           url: imgUrl,
           productId: idProduct,
         });
@@ -623,6 +653,56 @@ const updateProductService = async (req, res) => {
     }
   } catch (error) {
     console.log("🚀 ~ addProductService ~ error:", error);
+  }
+};
+
+const addProductDetailsService = async (req, res) => {
+  try {
+    const idProduct = Number(req.body.idProduct);
+    const idSize = Number(req.body.idSize);
+    const idColor = Number(req.body.idColor);
+    const quantity = Number(req.body.quantity);
+
+    const validationResult = AddproductDetailsValidate.validate({
+      idProduct: idProduct,
+      quantity: quantity,
+    });
+
+    if (validationResult.error) {
+      return res
+        .status(BAD_REQUEST)
+        .json(error(validationResult.error.details[0].message));
+    }
+
+    const whereCondition = {};
+
+    if (idSize) {
+      whereCondition.size = idSize;
+    }
+    if (idColor) {
+      whereCondition.color = idColor;
+    }
+
+    const isCheckProperties = await db.ProductDetails.findOne({
+      where: {
+        properties: whereCondition,
+        productId: idProduct,
+      },
+    });
+
+    if (Object.entries(isCheckProperties || {}).length > 0) {
+      return res.status(BAD_REQUEST).json(error("Thuộc Tính đã tồn tại"));
+    }
+
+    const addProDetails = await db.ProductDetails.create({
+      productId: idProduct,
+      properties: { size: idSize, color: idColor },
+      quantity: quantity,
+    });
+
+    return res.status(OK).json(success(addProDetails));
+  } catch (error) {
+    console.log("🚀 ~ addProductDetails ~ error:", error);
   }
 };
 
@@ -667,7 +747,7 @@ const updateQuantityVariantService = async (req, res) => {
   }
 };
 
-//delete Product;
+//soft delete Product;
 const deleteProductService = async (req, res) => {
   try {
     const idProduct = parseInt(req.params.id);
@@ -683,6 +763,25 @@ const deleteProductService = async (req, res) => {
     }
   } catch (error) {
     console.log("🚀 ~ deleteProduct ~ error:", error);
+  }
+};
+
+//restore Product;
+const restoreProductService = async (req, res) => {
+  try {
+    const idProduct = parseInt(req.params.id);
+
+    const restorePro = await db.Product.restore({
+      where: { id: idProduct },
+    });
+
+    if (restorePro) {
+      return res.status(OK).json(success("Phục hồi thành công !"));
+    } else {
+      return res.status(BAD_REQUEST).json(success("Phục hồi thất bại !"));
+    }
+  } catch (error) {
+    console.log("🚀 ~ restoreProductService ~ error:", error);
   }
 };
 
@@ -1255,4 +1354,6 @@ export {
   suggestProductsService,
   productReviewsService,
   getAllVariantService,
+  addProductDetailsService,
+  restoreProductService,
 };

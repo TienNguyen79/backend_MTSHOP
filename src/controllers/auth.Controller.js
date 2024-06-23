@@ -4,7 +4,9 @@ import {
   LogoutService,
   forgotPassService,
   getCurrentUser,
+  loginAdminService,
   loginService,
+  overviewInfoService,
   refreshTokenService,
   registerService,
   sendMailService,
@@ -80,6 +82,26 @@ const handleForgotPass = async (req, res) => {
   }
 };
 
+const handleLoginAdmin = async (req, res) => {
+  try {
+    let data = await loginAdminService(req.body, res);
+
+    return data;
+  } catch (error) {
+    return res.status(INTERNAL_SERVER_ERROR).json(error);
+  }
+};
+
+const handleOverviewInfo = async (req, res) => {
+  try {
+    let data = await overviewInfoService(req, res);
+
+    return data;
+  } catch (error) {
+    return res.status(INTERNAL_SERVER_ERROR).json(error);
+  }
+};
+
 export {
   handleRegister,
   handleLogin,
@@ -88,4 +110,6 @@ export {
   handleSendMail,
   handleForgotPass,
   handleGetCurrentUser,
+  handleLoginAdmin,
+  handleOverviewInfo,
 };
