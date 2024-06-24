@@ -17,6 +17,7 @@ const getAllOrderService = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const offset = (page - 1) * limit;
     const token = req.headers.authorization;
+    const orderId = parseInt(req.query.orderId);
 
     if (token) {
       const accessToken = token.split(" ")[1];
@@ -32,6 +33,10 @@ const getAllOrderService = async (req, res) => {
           if (statusOrder) {
             conditionWhere.orderState = statusOrder;
           }
+          if (orderId) {
+            conditionWhere.id = orderId;
+          }
+          console.log("🚀 ~ jwt.verify ~ conditionWhere:", conditionWhere);
 
           const getAllOrder = await db.Order.findAll({
             where: conditionWhere,
