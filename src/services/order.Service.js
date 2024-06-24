@@ -622,6 +622,11 @@ const CancelOrderService = async (req, res) => {
               .status(UNAUTHORIZED)
               .json(error("Đơn hàng đã được hủy trước đó !"));
           }
+          if (order.orderState === "5") {
+            return res
+              .status(UNAUTHORIZED)
+              .json(error("Không thể hủy đơn hàng đã được giao"));
+          }
 
           const CancelOrder = await db.Order.update(
             {
@@ -670,6 +675,11 @@ const CancelOrderService = async (req, res) => {
             return res
               .status(UNAUTHORIZED)
               .json(error("Đơn hàng đã được hủy trước đó !"));
+          }
+          if (order.orderState === "5") {
+            return res
+              .status(UNAUTHORIZED)
+              .json(error("Không thể hủy đơn hàng đã được giao"));
           }
 
           const CancelOrder = await db.Order.update(
