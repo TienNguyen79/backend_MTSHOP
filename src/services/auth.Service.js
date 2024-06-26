@@ -81,7 +81,7 @@ const loginService = async (data, res) => {
         .json(error(validationResult.error.details[0].message));
     } else {
       const user = await db.User.findOne({
-        where: { email: data.email },
+        where: { email: data.email, roleID: statusRole.USER },
         raw: true,
       });
 
