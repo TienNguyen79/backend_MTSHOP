@@ -31,12 +31,17 @@ const getAllUserService = async (req, res) => {
     const getFullUser = await db.User.findAll({
       where: whereCondition,
       limit: HIGH_LIMIT,
+      order: [["createdAt", "DESC"]],
     });
 
     const results = await db.User.findAll({
       where: whereCondition,
       limit: limit,
       offset: offset,
+      order: [["createdAt", "DESC"]],
+      attributes: {
+        exclude: ["password"], //bỏ field này đi
+      },
     });
 
     return res.status(OK).json(
@@ -58,6 +63,7 @@ const addUserService = async (req, res) => {
     const email = req.body.email;
     const password = req.body.password;
     const roleID = req.body.roleID;
+    const avatar = req.body.avatar;
 
     const phoneNumber = req.body.phoneNumber;
 
@@ -100,7 +106,7 @@ const addUserService = async (req, res) => {
       password: hashed,
       phoneNumber: phoneNumber,
       roleID: roleID || statusRole.USER,
-      avatar: "",
+      avatar: avatar || "",
       status: 0,
     });
     if (results) {
@@ -124,6 +130,7 @@ const updateInfoUserService = async (req, res) => {
     const avatar = req.body.avatar;
     const token = req.headers.authorization;
     const idUser = req.body.idUser;
+    const roleID = req.body.roleID;
 
     const salt = await bcrypt.genSalt(10);
 
@@ -172,6 +179,7 @@ const updateInfoUserService = async (req, res) => {
           email: email,
           phoneNumber: phoneNumber,
           avatar: avatar || "",
+          roleID: roleID,
         };
 
         if (currentPassword && password) {
