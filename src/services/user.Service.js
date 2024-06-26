@@ -123,6 +123,7 @@ const updateInfoUserService = async (req, res) => {
     const phoneNumber = req.body.phoneNumber;
     const avatar = req.body.avatar;
     const token = req.headers.authorization;
+    const idUser = req.body.idUser;
 
     const salt = await bcrypt.genSalt(10);
 
@@ -188,7 +189,7 @@ const updateInfoUserService = async (req, res) => {
         }
 
         const updateInforUser = await db.User.update(whereUpdate, {
-          where: { id: user.id },
+          where: { id: idUser ? idUser : user.id },
         });
 
         if (updateInforUser[0] > 0) {
