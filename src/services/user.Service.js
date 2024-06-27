@@ -208,7 +208,7 @@ const updateInfoUserService = async (req, res) => {
       });
     }
   } catch (error) {
-    console.log("🚀 ~ updateInfoUser ~ error:", error);
+    console.log("🚀 ~ updateInfoUser ~ errorr:", error);
   }
 };
 
