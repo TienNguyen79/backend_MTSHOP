@@ -25,7 +25,10 @@ const getAllOrderService = async (req, res) => {
         if (err) {
           return res.status(FORBIDDEN).json(error("Token không hợp lệ"));
         }
-        if (user.roleID === statusRole.ADMIN) {
+        if (
+          user.roleID === statusRole.ADMIN ||
+          user.roleID === statusRole.STAFF
+        ) {
           const conditionWhere = {};
 
           const statusOrder = req.query.statusOrder;
@@ -177,7 +180,10 @@ const getDetailsOrderService = async (req, res) => {
         if (err) {
           return res.status(FORBIDDEN).json(error("Token không hợp lệ"));
         }
-        if (user.roleID === statusRole.ADMIN) {
+        if (
+          user.roleID === statusRole.ADMIN ||
+          user.roleID === statusRole.STAFF
+        ) {
           // ADMIN
           const results = await db.Order.findOne({
             include: [
@@ -530,7 +536,10 @@ const updateStatusOrderService = async (req, res) => {
           return res.status(FORBIDDEN).json(error("Token không hợp lệ"));
         }
 
-        if (user.roleID === statusRole.ADMIN) {
+        if (
+          user.roleID === statusRole.ADMIN ||
+          user.roleID === statusRole.STAFF
+        ) {
           const order = await db.Order.findOne({ where: { id: orderId } });
           if (!order) {
             return res.status(NOT_FOUND).json(error("Order không tồn tại"));
@@ -661,7 +670,10 @@ const CancelOrderService = async (req, res) => {
           } else {
             return res.status(BAD_REQUEST).json(success("Hủy Thất Bại!"));
           }
-        } else if (user.roleID === statusRole.ADMIN) {
+        } else if (
+          user.roleID === statusRole.ADMIN ||
+          user.roleID === statusRole.STAFF
+        ) {
           const orderId = req.params.id;
 
           const order = await db.Order.findOne({

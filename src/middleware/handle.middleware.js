@@ -29,7 +29,10 @@ const verifyToken = (req, res, next) => {
 
 const verifyTokenAdminAuth = (req, res, next) => {
   verifyToken(req, res, () => {
-    if (req.user.roleID === statusRole.ADMIN) {
+    if (
+      req.user.roleID === statusRole.ADMIN ||
+      req.user.roleID === statusRole.STAFF
+    ) {
       next();
     } else {
       return res.status(FORBIDDEN).json(error("Bạn không có quyền !"));

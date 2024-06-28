@@ -22,6 +22,7 @@ import jwt from "jsonwebtoken";
 import { configs } from "../config/config.jwtkey";
 import sendMail from "../commom/mailer";
 import { statusRole, statusUser } from "../constant/constant.commom";
+import { Op } from "sequelize";
 
 //register
 const registerService = async (data, res) => {
@@ -337,7 +338,12 @@ const loginAdminService = async (data, res) => {
         .json(error(validationResult.error.details[0].message));
     } else {
       const user = await db.User.findOne({
-        where: { email: data.email, roleID: statusRole.ADMIN },
+        where: {
+          email: data.email,
+          roleID: {
+            [Op.in]: [statusRole.ADMIN, statusRole.STAFF],
+          },
+        },
         raw: true,
       });
 
