@@ -206,10 +206,15 @@ const getDetailsOrderService = async (req, res) => {
                 include: [
                   {
                     model: db.ProductDetails,
-                    include: [{ model: db.Product }],
-                    attributes: {
-                      exclude: ["productId"], //bỏ field này đi
-                    },
+                    include: [
+                      {
+                        model: db.Product,
+                        include: [{ model: db.ProductImage, as: "image" }],
+                      },
+                    ],
+                    // attributes: {
+                    //   exclude: ["productId"], //bỏ field này đi
+                    // },
                   },
                 ],
               },
@@ -315,9 +320,9 @@ const getDetailsOrderService = async (req, res) => {
                         include: [{ model: db.ProductImage, as: "image" }],
                       },
                     ],
-                    attributes: {
-                      exclude: ["productId"], //bỏ field này đi
-                    },
+                    // attributes: {
+                    //   exclude: ["productId"], //bỏ field này đi
+                    // },
                   },
                 ],
               },
