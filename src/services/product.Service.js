@@ -710,9 +710,11 @@ const addProductDetailsService = async (req, res) => {
 const updateQuantityVariantService = async (req, res) => {
   try {
     const quantity = parseInt(req.body.quantity);
+    const idProduct = parseInt(req.body.idProduct);
 
     const validationResult = updateQuantityVariantValidate.validate({
       quantity: quantity,
+      idProduct: idProduct,
     });
 
     if (validationResult.error) {
@@ -725,14 +727,27 @@ const updateQuantityVariantService = async (req, res) => {
     const idColor = parseInt(req.body.idColor);
     const idProductVariant = parseInt(req.params.id);
 
+    const isCheckValidProperties = await db.ProductDetails.findOne({
+      where: {
+        productId: idProduct,
+        properties: { size: idSize, color: idColor },
+      },
+      raw: true,
+    });
+
+    if (Object.entries(isCheckValidProperties || {}).length > 0) {
+      return res.status(BAD_REQUEST).json(error("Thuộc tính đã tồn tại!"));
+    }
+
     const updateQuantity = await db.ProductDetails.update(
       {
         quantity: quantity,
+        properties: { size: idSize, color: idColor },
       },
       {
         where: {
           id: idProductVariant,
-          properties: { size: idSize, color: idColor },
+          // properties: { size: idSize, color: idColor },
         },
       }
     );
@@ -740,7 +755,7 @@ const updateQuantityVariantService = async (req, res) => {
     if (updateQuantity) {
       return res.status(OK).json(success("Cập nhật thành công !"));
     } else {
-      return res.status(BAD_REQUEST).json(success("Cập nhật thất bại!"));
+      return res.status(BAD_REQUEST).json(error("Cập nhật thất bại!"));
     }
   } catch (error) {
     console.log("🚀 ~ updateQuantityVariantService ~ error:", error);

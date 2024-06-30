@@ -98,6 +98,11 @@ export const updateQuantityVariantValidate = Joi.object({
     "number.integer": "quantity phải là số nguyên.",
     "number.min": "quantity phải lớn hơn 0.",
   }),
+  idProduct: Joi.number().integer().required().messages({
+    "any.required": "idProduct là trường bắt buộc.",
+    "number.base": "idProduct phải là số.",
+    "number.integer": "idProduct phải là số nguyên.",
+  }),
 });
 
 export const reviewProductValidate = Joi.object({
