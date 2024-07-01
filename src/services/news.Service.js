@@ -106,7 +106,14 @@ const addNewsService = async (req, res) => {
 
 const updateNewsService = async (req, res) => {
   try {
-    const validationResult = NewsValidate.validate(req.body);
+    const { title, url, content, categoryId } = req.body;
+
+    const validationResult = NewsValidate.validate({
+      categoryId: categoryId,
+      title: title,
+      url: url,
+      content: content,
+    });
 
     if (validationResult.error) {
       return res
@@ -114,7 +121,6 @@ const updateNewsService = async (req, res) => {
         .json(error(validationResult.error.details[0].message));
     }
 
-    const { title, url, content, categoryId } = req.body;
     const id = parseInt(req.params.id);
 
     const isCategory = await db.Category.findByPk(categoryId, { raw: true });
