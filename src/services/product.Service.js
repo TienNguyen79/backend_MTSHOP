@@ -38,7 +38,7 @@ const GetAllProductService = async (req, res) => {
     }
 
     if (topDisCount) {
-      whereCondition.discount = { [db.Sequelize.Op.gte]: topDisCount };
+      whereCondition.discount = { [db.Sequelize.Op.gte]: topDisCount }; //gte : >= 6
     }
 
     const getFullProduct = await db.Product.findAll({
@@ -156,7 +156,7 @@ const getDetailsProduct = async (req, res) => {
   try {
     const productId = parseInt(req.params.id);
 
-    const isProduct = await db.Product.findByPk(productId, { paranoid: false });
+    const isProduct = await db.Product.findByPk(productId, { paranoid: false }); // hiển thị cả những cái đã soft delete
 
     if (isProduct) {
       const results = await db.Product.findOne({
@@ -267,6 +267,7 @@ const getDetailsProduct = async (req, res) => {
           }
           sizeColorMap[size.id].add(color.id);
         }
+        //  { '3': Set(1) { 9 }, '4': Set(1) { 10 }, '5': Set(2) { 9, 7 } } cái này kiểu size 3 có color 9, size 4 có color : 10
         console.log(
           "🚀 ~ parsedProductDetails.forEach ~ sizeColorMap:",
           sizeColorMap
@@ -963,7 +964,11 @@ const filterProductService = async (req, res) => {
 // suggestProductsService : kiểu gợi ý các sản phẩm có trong cùng đơn hàng mà hiện ra phải khác id với sản phẩm ban đầu
 const suggestProductsService = async (req, res) => {
   try {
+    const token = req.headers.authorization;
+    const accessToken = token ? token.split(" ")[1] : "";
+    const user = token ? jwt.verify(accessToken, configs.key.public) : null;
     const id_product = req.params.id;
+
     let isSuggestedProductIdsNone = false;
     // Bước 1: Tìm các productDetailsId từ productId
     const productDetails = await db.ProductDetails.findAll({
@@ -989,7 +994,7 @@ const suggestProductsService = async (req, res) => {
 
     // đơn hàng nhưng phải đã giao thành công
     const findOrderStateSuccess = await db.Order.findAll({
-      where: { id: orderIds, orderState: "5" },
+      where: { id: orderIds, orderState: "5", userId: user ? user.id : null },
       raw: true,
     });
 
@@ -1036,6 +1041,8 @@ const suggestProductsService = async (req, res) => {
     }
 
     console.log("🚀 ~ suggestProductsService ~ prob_array:", prob_array);
+
+    console.log("Object.entries(prob_array)", Object.entries(prob_array));
 
     // Bước 5: Sắp xếp sản phẩm theo tần suất xuất hiện và lấy danh sách gợi ý
     const sortedProducts = Object.entries(prob_array).sort(
