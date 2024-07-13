@@ -1,6 +1,7 @@
 import { INTERNAL_SERVER_ERROR } from "../constant/http.status";
 import { error } from "../results/handle.results";
 import {
+  backStatusOrderService,
   CancelOrderService,
   DeleteOrderService,
   getAllOrderService,
@@ -49,6 +50,16 @@ const handleUpdateStatusOrder = async (req, res) => {
   }
 };
 
+const handleBackStatusOrder = async (req, res) => {
+  try {
+    let data = await backStatusOrderService(req, res);
+
+    return data;
+  } catch (error1) {
+    return res.status(INTERNAL_SERVER_ERROR).json(error(error1));
+  }
+};
+
 const handleCancelOrder = async (req, res) => {
   try {
     let data = await CancelOrderService(req, res);
@@ -76,4 +87,5 @@ export {
   handleUpdateStatusOrder,
   handleCancelOrder,
   handleDeleteOrder,
+  handleBackStatusOrder,
 };

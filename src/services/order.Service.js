@@ -608,6 +608,53 @@ const updateStatusOrderService = async (req, res) => {
   }
 };
 
+const backStatusOrderService = async (req, res) => {
+  const orderId = req.params.id;
+  const token = req.headers.authorization;
+
+  if (token) {
+    const accessToken = token.split(" ")[1];
+    jwt.verify(accessToken, configs.key.private, async (err, user) => {
+      if (err) {
+        return res.status(FORBIDDEN).json(error("Token không hợp lệ"));
+      }
+
+      if (
+        user.roleID === statusRole.ADMIN ||
+        user.roleID === statusRole.STAFF
+      ) {
+        const order = await db.Order.findOne({ where: { id: orderId } });
+        if (!order) {
+          return res.status(NOT_FOUND).json(error("Order không tồn tại"));
+        }
+
+        const currentState = parseInt(order.orderState, 10);
+        console.log("🚀 ~ jwt.verify ~ currentState:", currentState);
+
+        if (currentState >= 2 && currentState < 5) {
+          const updateStausOrder = await db.Order.update(
+            {
+              orderState: (currentState - 1).toString(),
+            },
+            {
+              where: { id: orderId },
+            }
+          );
+
+          if (updateStausOrder) {
+            const order = await db.Order.findOne({ where: { id: orderId } });
+            return res.status(OK).json(success(order));
+          }
+        } else {
+          return res.status(OK).json(success("Cập nhật trạng thái thất bại !"));
+        }
+      } else {
+        return res.status(UNAUTHORIZED).json(success("Bạn không có quyền !"));
+      }
+    });
+  }
+};
+
 const CancelOrderService = async (req, res) => {
   try {
     const token = req.headers.authorization;
@@ -767,4 +814,5 @@ export {
   updateStatusOrderService,
   CancelOrderService,
   DeleteOrderService,
+  backStatusOrderService,
 };

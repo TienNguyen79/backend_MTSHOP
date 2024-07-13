@@ -732,6 +732,7 @@ const updateQuantityVariantService = async (req, res) => {
       where: {
         productId: idProduct,
         properties: { size: idSize, color: idColor },
+        id: { [Op.ne]: idProductVariant }, // kiểu là khi mà muốn update mỗi số lượng thôi thì vẫn được
       },
       raw: true,
     });

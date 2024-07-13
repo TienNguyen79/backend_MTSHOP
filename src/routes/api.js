@@ -57,6 +57,7 @@ import {
   handleUpdateQuantityProductInCart,
 } from "../controllers/cart.Controller";
 import {
+  handleBackStatusOrder,
   handleCancelOrder,
   handleDeleteOrder,
   handleGetAllOrder,
@@ -156,6 +157,7 @@ const initWebRouter = (app) => {
 
   //order
   router.get("/order", verifyToken, handleGetAllOrder);
+  router.put("/order/backStatus/:id", verifyToken, handleBackStatusOrder);
   router.get("/order/:id", verifyToken, handleGetDetailsOrder);
   router.post("/order", verifyToken, handleOrderProduct); // đặt hàng
   router.put("/order/:id", verifyToken, handleUpdateStatusOrder);
