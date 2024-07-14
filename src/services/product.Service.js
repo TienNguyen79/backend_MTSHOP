@@ -967,7 +967,7 @@ const suggestProductsService = async (req, res) => {
   try {
     const token = req.headers.authorization;
     const accessToken = token ? token.split(" ")[1] : "";
-    const user = token ? jwt.verify(accessToken, configs.key.public) : null;
+    // const user = token ? jwt.verify(accessToken, configs.key.public) : null;
     const id_product = req.params.id;
 
     let isSuggestedProductIdsNone = false;
@@ -995,7 +995,7 @@ const suggestProductsService = async (req, res) => {
 
     // đơn hàng nhưng phải đã giao thành công
     const findOrderStateSuccess = await db.Order.findAll({
-      where: { id: orderIds, orderState: "5", userId: user ? user.id : null },
+      where: { id: orderIds, orderState: "5" },
       raw: true,
     });
 
