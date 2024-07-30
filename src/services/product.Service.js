@@ -965,9 +965,6 @@ const filterProductService = async (req, res) => {
 // suggestProductsService : kiểu gợi ý các sản phẩm có trong cùng đơn hàng mà hiện ra phải khác id với sản phẩm ban đầu
 const suggestProductsService = async (req, res) => {
   try {
-    const token = req.headers.authorization;
-    const accessToken = token ? token.split(" ")[1] : "";
-    // const user = token ? jwt.verify(accessToken, configs.key.public) : null;
     const id_product = req.params.id;
 
     let isSuggestedProductIdsNone = false;

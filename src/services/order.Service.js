@@ -11,6 +11,7 @@ import db from "../models";
 import { error, success } from "../results/handle.results";
 import { orderValidate } from "../validate/order.Validate";
 import { HIGH_LIMIT, statusRole } from "../constant/constant.commom";
+import { Op } from "sequelize";
 const getAllOrderService = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 10;
@@ -565,6 +566,66 @@ const updateStatusOrderService = async (req, res) => {
 
             if (updateStausOrder) {
               const order = await db.Order.findOne({ where: { id: orderId } });
+
+              if (order.orderState === "5") {
+                const Findorder = await db.OrderDetails.findAll({
+                  where: { orderId: orderId },
+                  raw: true,
+                });
+
+                const arrProDetails =
+                  Findorder.length > 0 &&
+                  Findorder.map((item) => ({
+                    productDetailsId: item.productDetailsId,
+                    quantity: item.quantity,
+                  }));
+
+                const productDetailsIds = arrProDetails.map(
+                  (item) => item.productDetailsId
+                );
+                const quantities = arrProDetails.map((item) => item.quantity);
+
+                const productId = await db.ProductDetails.findAll({
+                  where: { id: { [Op.in]: productDetailsIds } },
+                  attributes: ["productId"],
+                  raw: true,
+                });
+
+                const productIdArr =
+                  productId.length > 0 &&
+                  productId.map((item, index) => ({
+                    productId: item.productId,
+                    quantity: quantities[index],
+                  }));
+
+                // Đếm tổng số lượng đã bán cho từng productId
+                const countMap = productIdArr.reduce(
+                  (acc, { productId, quantity }) => {
+                    acc[productId] = (acc[productId] || 0) + quantity;
+                    return acc;
+                  },
+                  {}
+                );
+
+                // Chuyển đổi countMap thành mảng các đối tượng
+                const result = Object.keys(countMap).map((key) => ({
+                  productId: key,
+                  sold: countMap[key],
+                }));
+
+                // Cập nhật số lượng đã bán của từng sản phẩm trong cơ sở dữ liệu
+                const updatePromises = result.map(async (item) => {
+                  await db.Product.update(
+                    {
+                      sold: db.sequelize.literal(`sold + ${item.sold}`),
+                    },
+                    { where: { id: item.productId } }
+                  );
+                });
+
+                // Chờ tất cả các cập nhật hoàn thành
+                await Promise.all(updatePromises);
+              }
               return res.status(OK).json(success(order));
             }
           } else {
